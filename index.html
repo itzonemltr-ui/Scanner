@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -35,7 +36,7 @@
             flex-direction: column;
             align-items: center;
             padding: 2rem;
-            background-image: 
+            background-image:
                 radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.1) 0%, transparent 40%),
                 radial-gradient(circle at 90% 80%, rgba(16, 185, 129, 0.1) 0%, transparent 40%);
         }
@@ -171,8 +172,13 @@
             font-family: 'JetBrains Mono', monospace;
         }
 
-        .pnl-positive { color: var(--accent); }
-        .pnl-negative { color: var(--accent-red); }
+        .pnl-positive {
+            color: var(--accent);
+        }
+
+        .pnl-negative {
+            color: var(--accent-red);
+        }
 
         .trader-info {
             display: flex;
@@ -191,8 +197,15 @@
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .fade-in {
@@ -225,6 +238,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <header>
@@ -305,18 +319,20 @@
             statusBox.style.display = 'block';
             tableBox.style.display = 'none';
             resultsTableBody.innerHTML = '';
-            
+
             try {
                 updateStatus('Fetching Top 50 Traders from Leaderboard...', 5);
                 const traders = await fetchTopTraders(50);
                 const results = [];
-                
+
                 const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000);
+
+                let excludedCounts = { count: 0, pf: 0, concentration: 0, inactive: 0 };
 
                 for (let i = 0; i < traders.length; i++) {
                     const trader = traders[i];
                     const progress = 10 + Math.floor((i / traders.length) * 85);
-                    updateStatus(`Analyzing ${trader.username || 'Anonymous'} (${i+1}/50)...`, progress);
+                    updateStatus(`Analyzing ${trader.username || 'Anonymous'} (${i + 1}/50)...`, progress);
 
                     try {
                         const [positions, activities] = await Promise.all([
@@ -327,7 +343,10 @@
                         const recentPositions = positions.filter(p => (p.timestamp * 1000) >= thirtyDaysAgo);
                         const recentTrades = activities.filter(a => a.type === 'TRADE' && (a.timestamp * 1000) >= thirtyDaysAgo);
 
-                        if (recentPositions.length === 0) continue;
+                        if (recentPositions.length === 0) {
+                            excludedCounts.inactive++;
+                            continue;
+                        }
 
                         let grossProfit = 0;
                         let grossLoss = 0;
@@ -352,31 +371,30 @@
                         const avgPnl = totalPnl / recentPositions.length;
 
                         // Filters
-                        let excluded = false;
-                        let reason = "";
-
                         if (recentTrades.length < 20) {
-                            excluded = true;
-                            reason = `Trade count ${recentTrades.length} < 20`;
-                        } else if (profitFactor < 1.3) {
-                            excluded = true;
-                            reason = `PF ${profitFactor.toFixed(2)} < 1.3`;
-                        } else if (grossProfit > 0 && (maxSingleProfit / grossProfit) > 0.4) {
-                            excluded = true;
-                            reason = `Profit concentration ${(maxSingleProfit/grossProfit*100).toFixed(1)}% > 40%`;
+                            excludedCounts.inactive++;
+                            continue;
                         }
 
-                        if (!excluded) {
-                            results.push({
-                                username: trader.username || 'Anonymous',
-                                address: trader.address,
-                                profitFactor,
-                                winRate,
-                                avgPnl,
-                                tradeCount: recentTrades.length,
-                                closedCount: recentPositions.length
-                            });
+                        if (profitFactor < 1.3) {
+                            excludedCounts.pf++;
+                            continue;
                         }
+
+                        if (grossProfit > 0 && (maxSingleProfit / grossProfit) > 0.4) {
+                            excludedCounts.concentration++;
+                            continue;
+                        }
+
+                        results.push({
+                            username: trader.username || 'Anonymous',
+                            address: trader.address,
+                            profitFactor,
+                            winRate,
+                            avgPnl,
+                            tradeCount: recentTrades.length,
+                            closedCount: recentPositions.length
+                        });
                     } catch (e) {
                         console.error(`Error processing ${trader.address}:`, e);
                     }
@@ -384,7 +402,15 @@
 
                 results.sort((a, b) => b.profitFactor - a.profitFactor);
                 renderResults(results);
-                updateStatus('Analysis Complete.', 100);
+
+                const totalExcluded = excludedCounts.inactive + excludedCounts.pf + excludedCounts.concentration;
+                updateStatus(`Analysis Complete. ${results.length} matched / ${totalExcluded} excluded.`, 100);
+
+                // Show summary alert if many were excluded
+                if (totalExcluded > 0) {
+                    showExclusionSummary(results.length, excludedCounts);
+                }
+
                 tableBox.style.display = 'block';
 
             } catch (err) {
@@ -393,6 +419,21 @@
                 startBtn.disabled = false;
             }
         });
+
+        function showExclusionSummary(matches, counts) {
+            const summaryDiv = document.createElement('div');
+            summaryDiv.className = 'fade-in';
+            summaryDiv.style.cssText = 'background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); padding: 1rem; border-radius: 0.5rem; margin-bottom: 2rem; color: #fca5a5; font-size: 0.9rem;';
+            summaryDiv.innerHTML = `
+                <strong>Analysis Conclusion:</strong> Only <strong>${matches}</strong> of the Top 50 traders meet your strict criteria for the last 30 days.<br>
+                <ul style="margin-top: 0.5rem; margin-left:1.5rem;">
+                    <li>${counts.inactive} were excluded for being inactive (< 20 trades).</li>
+                    <li>${counts.pf} were excluded for low Profit Factor (< 1.3).</li>
+                    <li>${counts.concentration} were excluded for high profit concentration (> 40%).</li>
+                </ul>
+            `;
+            statusBox.after(summaryDiv);
+        }
 
         function updateStatus(text, progress) {
             statusText.innerText = text;
@@ -405,12 +446,12 @@
                     <td>
                         <div class="trader-info">
                             <span class="trader-name">${r.username}</span>
-                            <span class="trader-address">${r.address.substring(0,6)}...${r.address.substring(38)}</span>
+                            <span class="trader-address">${r.address.substring(0, 6)}...${r.address.substring(38)}</span>
                         </div>
                     </td>
                     <td><span class="pf-value pnl-positive">${r.profitFactor === Infinity ? '∞' : r.profitFactor.toFixed(3)}</span></td>
                     <td>${r.winRate.toFixed(1)}%</td>
-                    <td class="${r.avgPnl >= 0 ? 'pnl-positive' : 'pnl-negative'}">$${r.avgPnl.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                    <td class="${r.avgPnl >= 0 ? 'pnl-positive' : 'pnl-negative'}">$${r.avgPnl.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                     <td>${r.tradeCount} <small style="color:var(--text-muted)">(${r.closedCount} closed)</small></td>
                     <td><span style="color:var(--accent); font-size: 0.8rem; font-weight: 700;">VERIFIED</span></td>
                 </tr>
@@ -418,4 +459,5 @@
         }
     </script>
 </body>
+
 </html>
