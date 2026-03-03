@@ -716,6 +716,8 @@
                 const excluded = {
                     noPositions: 0,
                     lowTrades: 0,
+                    botHighFreq: 0,
+                    botSmallSize: 0,
                     lowPF: 0,
                     concentration: 0,
                     lowVolume: 0,
@@ -759,7 +761,24 @@
                             continue;
                         }
 
-                        // ────── FILTER 4: Recency — must have traded in last 7 days ──────
+                        // ────── FILTER 4: Bot Detection — >200 buy trades per day avg ──────
+                        const recentBuys = recentTrades.filter(t => t.side === 'BUY');
+                        const activeDays = Math.max(1, (Date.now() - thirtyDaysAgo) / (24 * 60 * 60 * 1000));
+                        const avgDailyBuys = recentBuys.length / activeDays;
+                        if (avgDailyBuys > 200) {
+                            excluded.botHighFreq++;
+                            continue;
+                        }
+
+                        // ────── FILTER 5: Bot Detection — avg trade size too small (<$50) ──────
+                        const totalTradeVolume = recentTrades.reduce((sum, t) => sum + parseFloat(t.usdcSize || '0'), 0);
+                        const avgTradeSize = recentTrades.length > 0 ? totalTradeVolume / recentTrades.length : 0;
+                        if (avgTradeSize < 1) {
+                            excluded.botSmallSize++;
+                            continue;
+                        }
+
+                        // ────── FILTER 6: Recency — must have traded in last 7 days ──────
                         const hasRecentTrade = activities.some(a => a.type === 'TRADE' && (a.timestamp * 1000) >= sevenDaysAgo);
                         if (!hasRecentTrade) {
                             excluded.stale++;
@@ -892,6 +911,8 @@
                 { icon: '🚫', label: 'No Positions (30d)', count: excluded.noPositions, color: 'red' },
                 { icon: '📉', label: 'Few Closed Pos (<5)', count: excluded.fewClosedPos, color: 'red' },
                 { icon: '📊', label: 'Low Trades (<10)', count: excluded.lowTrades, color: 'amber' },
+                { icon: '🤖', label: 'Bot: >200 Buys/Day', count: excluded.botHighFreq, color: 'rose' },
+                { icon: '🔬', label: 'Bot: Tiny Trades (<$1)', count: excluded.botSmallSize, color: 'rose' },
                 { icon: '⏰', label: 'Stale (No 7d Trade)', count: excluded.stale, color: 'cyan' },
                 { icon: '📈', label: 'Low PF (<1.3)', count: excluded.lowPF, color: 'amber' },
                 { icon: '🎯', label: 'Concentration (>40%)', count: excluded.concentration, color: 'purple' },
