@@ -118,20 +118,21 @@ async function calculateProfitFactors() {
         const winRate = (wins / recentPositions.length) * 100;
         const avgPnl = totalPnl / recentPositions.length;
 
-        // Exclusion Criteria:
-        // 1. Trade count < 20
-        if (recentTradesCount < 20) {
-            console.log(`Excluded (Trade count ${recentTradesCount} < 20)`);
+        // NEW CONDITIONS:
+        // 1. Must be a new wallet created within 1 month
+        if (activities.length === 0) {
+            console.log(`Excluded (No activities found)`);
             continue;
         }
-        // 2. Profit Factor < 1.3
-        if (profitFactor < 1.3) {
-            console.log(`Excluded (Profit Factor ${profitFactor.toFixed(2)} < 1.3)`);
+        const oldestActivity = activities[activities.length - 1];
+        if (oldestActivity && (oldestActivity.timestamp * 1000) < thirtyDaysAgo) {
+            console.log(`Excluded (Wallet older than 1 month)`);
             continue;
         }
-        // 3. One trade contributes > 40% of total profit
-        if (grossProfit > 0 && (maxSingleProfit / grossProfit) > 0.4) {
-            console.log(`Excluded (Single profit concentration ${(maxSingleProfit / grossProfit * 100).toFixed(1)}% > 40%)`);
+
+        // 2. High profit factor (>= 1.5)
+        if (profitFactor < 1.5) {
+            console.log(`Excluded (Profit Factor ${profitFactor.toFixed(2)} < 1.5)`);
             continue;
         }
 

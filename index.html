@@ -684,10 +684,7 @@
                 const T7 = now - 7 * 86400000;
 
                 const ex = {
-                    noPos: 0, fewPos: 0, lowTrades: 0, hugeLoss: 0,
-                    bot150day: 0, bot2min: 0, bot5min: 0, botTinyProfit: 0, botMM: 0,
-                    lowPF: 0, negProfit: 0, concentration: 0,
-                    belowMedianRisk: 0, errors: 0,
+                    noPos: 0, oldWallet: 0, lowPF: 0, errors: 0
                 };
 
                 // ── PASS 1: Compute all metrics (before median filter) ──
@@ -706,48 +703,11 @@
                         const recentPos = positions.filter(p => (p.timestamp * 1000) >= T30);
                         const recentTrades = activities.filter(a => a.type === 'TRADE' && (a.timestamp * 1000) >= T30);
 
-                        // ── BASIC FILTERS ──
-                        if (recentPos.length === 0) { ex.noPos++; continue; }
-                        if (recentPos.length < 5) { ex.fewPos++; continue; }
-                        if (recentTrades.length < 20) { ex.lowTrades++; continue; }
-
                         // ── ALL-TIME LOSS CHECK ──
                         const allTimePnl = positions.reduce((s, p) => s + parseFloat(p.realizedPnl || '0'), 0);
-                        if (allTimePnl < -1000) { ex.hugeLoss++; continue; }
 
                         // ── BOT DETECTION ──
-                        // Rule 1: >150 trades in any single day
-                        const dayBuckets = {};
-                        for (const t of recentTrades) {
-                            const day = new Date(t.timestamp * 1000).toISOString().slice(0, 10);
-                            dayBuckets[day] = (dayBuckets[day] || 0) + 1;
-                        }
-                        const maxTradesInDay = Math.max(...Object.values(dayBuckets));
-                        if (maxTradesInDay > 250) { ex.bot150day++; continue; }
-
-                        // Rule 2: Average time between trades < 2 minutes
-                        const sortedTs = recentTrades.map(t => t.timestamp).sort((a, b) => a - b);
-                        let totalGap = 0;
-                        for (let j = 1; j < sortedTs.length; j++) totalGap += (sortedTs[j] - sortedTs[j - 1]);
-                        const avgGapSec = sortedTs.length > 1 ? totalGap / (sortedTs.length - 1) : Infinity;
-                        if (avgGapSec < 120) { ex.bot2min++; continue; }
-
-                        // Rule 3: >70% of trades closed within 5 minutes of entry
-                        // Match BUY→SELL on same conditionId within 5 min
-                        const buyMap = {}; // conditionId → [timestamps]
-                        let quickFlips = 0, totalPairs = 0;
-                        for (const t of recentTrades) {
-                            const cid = t.conditionId;
-                            if (t.side === 'BUY') {
-                                if (!buyMap[cid]) buyMap[cid] = [];
-                                buyMap[cid].push(t.timestamp);
-                            } else if (t.side === 'SELL' && buyMap[cid] && buyMap[cid].length > 0) {
-                                const buyTs = buyMap[cid].shift();
-                                totalPairs++;
-                                if ((t.timestamp - buyTs) < 300) quickFlips++;
-                            }
-                        }
-                        if (totalPairs > 5 && (quickFlips / totalPairs) > 0.70) { ex.bot5min++; continue; }
+                        function isWithin30(activityTimeMsg = null) { }; // Remove prior bots check
 
                         // ── COMPUTE ALL 11 METRICS ──
                         let grossProfit = 0, grossLoss = 0, wins = 0, maxSingleProfit = 0, totalPnl = 0;
@@ -764,24 +724,24 @@
                         const totalTrades = recentTrades.length;
                         const totalVolume = recentPos.reduce((s, p) => s + parseFloat(p.totalBought || '0'), 0);
                         const netProfit = totalPnl;
-                        const winRate = (wins / recentPos.length) * 100;
-                        const avgPnl = totalPnl / recentPos.length;
+                        const winRate = recentPos.length > 0 ? (wins / recentPos.length) * 100 : 0;
+                        const avgPnl = recentPos.length > 0 ? totalPnl / recentPos.length : 0;
                         const mdd = maxDrawdown(pnlList);
                         const vol = stdDev(pnlList);
                         const pf = grossLoss === 0 ? (grossProfit > 0 ? Infinity : 0) : grossProfit / grossLoss;
                         const riskAdj = vol > 0 ? netProfit / vol : 0;
+                        const avgTradeSize = recentPos.length > 0 ? totalVolume / recentPos.length : 0;
 
-                        // Rule 4: Avg profit per trade < 0.2% of trade size
-                        const avgTradeSize = totalVolume / Math.max(1, recentPos.length);
-                        if (avgTradeSize > 0 && (avgPnl / avgTradeSize) < 0.002) { ex.botTinyProfit++; continue; }
+                        // ── NEW CONDITIONS: ONLY NEW WALLETS (1 MONTH) & PF >= 1.5 ──
+                        if (activities.length === 0) { ex.noPos++; continue; }
 
-                        // Rule 5: >80% win rate + <0.3% avg return → market maker
-                        if (winRate > 80 && avgTradeSize > 0 && (avgPnl / avgTradeSize) < 0.003) { ex.botMM++; continue; }
+                        const oldestActivity = activities[activities.length - 1];
+                        if (oldestActivity && (oldestActivity.timestamp * 1000) < T30) {
+                            ex.oldWallet++;
+                            continue;
+                        }
 
-                        // ── QUALITY FILTERS ──
                         if (pf < 1.5) { ex.lowPF++; continue; }
-                        if (netProfit <= 0) { ex.negProfit++; continue; }
-                        if (grossProfit > 0 && (maxSingleProfit / grossProfit) > 0.40) { ex.concentration++; continue; }
 
                         // Robust PF
                         const robustGP = grossProfit - maxSingleProfit;
@@ -815,10 +775,6 @@
 
                     const results = [];
                     for (const c of candidates) {
-                        if (c.riskAdj < medianRisk) {
-                            ex.belowMedianRisk++;
-                            continue;
-                        }
                         // Compute quality grade with median context
                         c.quality = qualityGrade(c.pf, c.robustPF, c.winRate, c.consistency, c.uniqueMarkets, c.riskAdj, medianRisk);
                         results.push(c);
@@ -847,23 +803,12 @@
 
         // ── Render exclusion cards ──
         function renderExclusion(ex, total, qualified) {
-            const botTotal = ex.bot150day + ex.bot2min + ex.bot5min + ex.botTinyProfit + ex.botMM;
-            const filterTotal = total - qualified - botTotal - ex.noPos - ex.fewPos - ex.lowTrades - ex.errors;
+            const filterTotal = total - qualified - ex.noPos - ex.errors;
 
             const cards = [
-                { i: '\ud83d\udeab', l: 'No Positions (30d)', n: ex.noPos, c: 'r' },
-                { i: '\ud83d\udcc9', l: 'Few Positions (<5)', n: ex.fewPos, c: 'r' },
-                { i: '\ud83d\udcca', l: 'Low Trades (<20)', n: ex.lowTrades, c: 'a' },
-                { i: '\ud83d\udca3', l: 'Huge All-Time Loss', n: ex.hugeLoss, c: 'r' },
-                { i: '\ud83e\udd16', l: 'Bot: >250/Day', n: ex.bot150day, c: 'o' },
-                { i: '\u23f1\ufe0f', l: 'Bot: <2min Avg Gap', n: ex.bot2min, c: 'o' },
-                { i: '\u26a1', l: 'Bot: >70% Quick Flip', n: ex.bot5min, c: 'o' },
-                { i: '\ud83d\udd2c', l: 'Bot: Tiny Profit <0.2%', n: ex.botTinyProfit, c: 'o' },
-                { i: '\ud83c\udfed', l: 'Bot: MM Pattern', n: ex.botMM, c: 'o' },
+                { i: '\ud83d\udeab', l: 'No Positions', n: ex.noPos, c: 'r' },
+                { i: '\ud83d\udcc5', l: 'Old Wallet (>1mo)', n: ex.oldWallet, c: 'o' },
                 { i: '\ud83d\udcc8', l: 'Low PF (<1.5)', n: ex.lowPF, c: 'a' },
-                { i: '\ud83d\udcc9', l: 'Negative Profit', n: ex.negProfit, c: 'r' },
-                { i: '\ud83c\udfaf', l: 'Concentration >40%', n: ex.concentration, c: 'p' },
-                { i: '\ud83d\udcc0', l: 'Below Median Risk-Adj', n: ex.belowMedianRisk, c: 'b' },
                 { i: '\u26a0\ufe0f', l: 'API Errors', n: ex.errors, c: 'r' },
             ];
 
@@ -880,8 +825,8 @@
 
             summaryStrip.style.display = 'block';
             document.getElementById('ssScanned').textContent = total;
-            document.getElementById('ssBots').textContent = botTotal;
-            document.getElementById('ssFiltered').textContent = total - qualified - botTotal;
+            document.getElementById('ssBots').textContent = 0;
+            document.getElementById('ssFiltered').textContent = total - qualified;
             document.getElementById('ssElite').textContent = qualified;
             document.getElementById('ssRate').textContent = `${total > 0 ? ((qualified / total) * 100).toFixed(0) : 0}%`;
         }
