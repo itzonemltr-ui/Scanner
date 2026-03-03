@@ -684,7 +684,7 @@
                 const T7 = now - 7 * 86400000;
 
                 const ex = {
-                    noPos: 0, oldWallet: 0, lowPF: 0, errors: 0
+                    noPos: 0, oldWallet: 0, lowPF: 0, hugeLoss: 0, errors: 0
                 };
 
                 // ── PASS 1: Compute all metrics (before median filter) ──
@@ -705,6 +705,7 @@
 
                         // ── ALL-TIME LOSS CHECK ──
                         const allTimePnl = positions.reduce((s, p) => s + parseFloat(p.realizedPnl || '0'), 0);
+                        if (allTimePnl < 0) { ex.hugeLoss++; continue; }
 
                         // ── BOT DETECTION ──
                         function isWithin30(activityTimeMsg = null) { }; // Remove prior bots check
@@ -803,12 +804,13 @@
 
         // ── Render exclusion cards ──
         function renderExclusion(ex, total, qualified) {
-            const filterTotal = total - qualified - ex.noPos - ex.errors;
+            const filterTotal = total - qualified - ex.noPos - ex.hugeLoss - ex.errors;
 
             const cards = [
                 { i: '\ud83d\udeab', l: 'No Positions', n: ex.noPos, c: 'r' },
                 { i: '\ud83d\udcc5', l: 'Old Wallet (>1mo)', n: ex.oldWallet, c: 'o' },
                 { i: '\ud83d\udcc8', l: 'Low PF (<1.5)', n: ex.lowPF, c: 'a' },
+                { i: '\ud83d\udca5', l: 'Negative All-Time PnL', n: ex.hugeLoss, c: 'r' },
                 { i: '\u26a0\ufe0f', l: 'API Errors', n: ex.errors, c: 'r' },
             ];
 

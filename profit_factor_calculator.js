@@ -77,6 +77,15 @@ async function calculateProfitFactors() {
             fetchActivity(trader.address)
         ]);
 
+        let allTimePnl = 0;
+        for (const pos of positions) {
+            allTimePnl += parseFloat(pos.realizedPnl || '0');
+        }
+        if (allTimePnl < 0) {
+            console.log(`Excluded (Negative All-Time PnL: $${allTimePnl.toFixed(2)})`);
+            continue;
+        }
+
         // Filter closed positions in the last 30 days
         const recentPositions = positions.filter(p => (p.timestamp * 1000) >= thirtyDaysAgo);
 
