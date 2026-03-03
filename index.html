@@ -20,6 +20,7 @@
             --text-muted: #94a3b8;
             --accent: #10b981;
             --accent-red: #ef4444;
+            --accent-amber: #f59e0b;
             --glass-border: rgba(255, 255, 255, 0.1);
         }
 
@@ -45,7 +46,7 @@
 
         .container {
             width: 100%;
-            max-width: 1200px;
+            max-width: 1400px;
         }
 
         header {
@@ -129,6 +130,139 @@
             transition: width 0.3s ease;
         }
 
+        /* Exclusion Summary */
+        .exclusion-summary {
+            display: none;
+            margin-bottom: 2rem;
+        }
+
+        .exclusion-summary h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .exclusion-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 0.75rem;
+        }
+
+        .exclusion-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 0.75rem;
+            padding: 1rem 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            transition: transform 0.2s ease;
+        }
+
+        .exclusion-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .exclusion-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+
+        .exclusion-icon.red {
+            background: rgba(239, 68, 68, 0.15);
+        }
+
+        .exclusion-icon.amber {
+            background: rgba(245, 158, 11, 0.15);
+        }
+
+        .exclusion-icon.blue {
+            background: rgba(99, 102, 241, 0.15);
+        }
+
+        .exclusion-icon.cyan {
+            background: rgba(6, 182, 212, 0.15);
+        }
+
+        .exclusion-icon.purple {
+            background: rgba(168, 85, 247, 0.15);
+        }
+
+        .exclusion-icon.rose {
+            background: rgba(244, 63, 94, 0.15);
+        }
+
+        .exclusion-icon.green {
+            background: rgba(16, 185, 129, 0.15);
+        }
+
+        .exclusion-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .exclusion-count {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text);
+            line-height: 1.2;
+        }
+
+        .exclusion-label {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+
+        /* Results Summary */
+        .results-summary {
+            display: none;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(16, 185, 129, 0.15));
+            border: 1px solid var(--glass-border);
+            border-radius: 1rem;
+            padding: 1.25rem 1.5rem;
+            margin-bottom: 2rem;
+            display: none;
+        }
+
+        .results-summary-inner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .results-summary .label {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .results-summary .value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(to right, #818cf8, #34d399);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .summary-stat {
+            text-align: center;
+        }
+
+        /* Table */
         .table-container {
             background: var(--card-bg);
             backdrop-filter: blur(12px);
@@ -138,27 +272,33 @@
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
         }
 
+        .table-scroll {
+            overflow-x: auto;
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
             text-align: left;
+            min-width: 950px;
         }
 
         th {
             background: rgba(255, 255, 255, 0.05);
             padding: 1rem;
-            font-size: 0.875rem;
+            font-size: 0.8rem;
             font-weight: 600;
             color: var(--text-muted);
             text-transform: uppercase;
             letter-spacing: 0.05em;
             border-bottom: 1px solid var(--glass-border);
+            white-space: nowrap;
         }
 
         td {
-            padding: 1rem;
+            padding: 0.85rem 1rem;
             border-bottom: 1px solid var(--glass-border);
-            font-size: 0.95rem;
+            font-size: 0.9rem;
         }
 
         tr:last-child td {
@@ -185,11 +325,11 @@
         .badge-new {
             background: linear-gradient(to right, #f43f5e, #e11d48);
             color: white;
-            font-size: 0.65rem;
+            font-size: 0.6rem;
             font-weight: 800;
-            padding: 0.2rem 0.5rem;
+            padding: 0.15rem 0.4rem;
             border-radius: 9999px;
-            margin-left: 0.5rem;
+            margin-left: 0.4rem;
             text-transform: uppercase;
             letter-spacing: 0.05em;
             box-shadow: 0 0 10px rgba(225, 29, 72, 0.4);
@@ -228,7 +368,7 @@
         }
 
         .trader-address {
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             color: var(--text-muted);
             font-family: monospace;
         }
@@ -249,29 +389,87 @@
             animation: fadeIn 0.5s ease forwards;
         }
 
-        .metrics-card {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .metric {
-            background: var(--card-bg);
-            padding: 1.5rem;
-            border-radius: 1rem;
-            border: 1px solid var(--glass-border);
-        }
-
-        .metric-label {
-            color: var(--text-muted);
-            font-size: 0.875rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .metric-value {
-            font-size: 1.5rem;
+        /* Quality Score Badge */
+        .quality-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            padding: 0.25rem 0.6rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
             font-weight: 700;
+        }
+
+        .quality-s {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(52, 211, 153, 0.2));
+            color: #34d399;
+            border: 1px solid rgba(52, 211, 153, 0.3);
+        }
+
+        .quality-a {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(129, 140, 248, 0.2));
+            color: #818cf8;
+            border: 1px solid rgba(129, 140, 248, 0.3);
+        }
+
+        .quality-b {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(251, 191, 36, 0.2));
+            color: #fbbf24;
+            border: 1px solid rgba(251, 191, 36, 0.3);
+        }
+
+        /* Mini bar chart for consistency */
+        .consistency-bar {
+            display: flex;
+            gap: 2px;
+            align-items: flex-end;
+            height: 20px;
+        }
+
+        .consistency-bar .week {
+            width: 8px;
+            border-radius: 2px;
+            min-height: 3px;
+        }
+
+        .week.profitable {
+            background: var(--accent);
+        }
+
+        .week.losing {
+            background: var(--accent-red);
+            opacity: 0.6;
+        }
+
+        .week.empty {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Tooltip */
+        .has-tooltip {
+            position: relative;
+            cursor: help;
+        }
+
+        .has-tooltip .tooltip {
+            display: none;
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1e293b;
+            color: var(--text);
+            border: 1px solid var(--glass-border);
+            padding: 0.4rem 0.6rem;
+            border-radius: 0.4rem;
+            font-size: 0.7rem;
+            white-space: nowrap;
+            z-index: 100;
+            pointer-events: none;
+        }
+
+        .has-tooltip:hover .tooltip {
+            display: block;
         }
     </style>
 </head>
@@ -280,7 +478,7 @@
     <div class="container">
         <header>
             <h1>Polymarket Pro Analytics</h1>
-            <p class="subtitle">Top 100 Traders Profit Factor • 30 Day Rolling Window</p>
+            <p class="subtitle">Multi-Source Leaderboard Scan • Advanced Filters • 30 Day Window</p>
         </header>
 
         <div class="controls">
@@ -294,22 +492,62 @@
             </div>
         </div>
 
+        <!-- Exclusion Summary Cards -->
+        <div class="exclusion-summary" id="exclusionSummary">
+            <h3>Filter Breakdown — Why Traders Were Excluded</h3>
+            <div class="exclusion-grid" id="exclusionGrid"></div>
+        </div>
+
+        <!-- Results Summary -->
+        <div class="results-summary" id="resultsSummary">
+            <div class="results-summary-inner">
+                <div class="summary-stat">
+                    <div class="label">Scanned</div>
+                    <div class="value" id="sumScanned">0</div>
+                </div>
+                <div class="summary-stat">
+                    <div class="label">Excluded</div>
+                    <div class="value" id="sumExcluded">0</div>
+                </div>
+                <div class="summary-stat">
+                    <div class="label">Qualified</div>
+                    <div class="value" id="sumQualified">0</div>
+                </div>
+                <div class="summary-stat">
+                    <div class="label">Pass Rate</div>
+                    <div class="value" id="sumPassRate">0%</div>
+                </div>
+            </div>
+        </div>
+
         <div class="table-container fade-in" id="tableBox" style="display: none;">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Trader</th>
-                        <th>Profit Factor</th>
-                        <th>Win Rate</th>
-                        <th>Avg PnL</th>
-                        <th>Trades (30d)</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody id="resultsTableBody">
-                    <!-- Results will be injected here -->
-                </tbody>
-            </table>
+            <div class="table-scroll">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Trader</th>
+                            <th class="has-tooltip">Quality<span class="tooltip">Composite score based on PF,
+                                    consistency, diversification</span></th>
+                            <th class="has-tooltip">Profit Factor<span class="tooltip">Gross Profit / Gross Loss (higher
+                                    = better)</span></th>
+                            <th class="has-tooltip">Robust PF<span class="tooltip">PF recalculated after removing best
+                                    trade</span></th>
+                            <th>Win Rate</th>
+                            <th>Avg PnL</th>
+                            <th class="has-tooltip">Volume<span class="tooltip">Total USDC bought in 30 days</span></th>
+                            <th class="has-tooltip">Markets<span class="tooltip">Unique markets traded in 30 days</span>
+                            </th>
+                            <th class="has-tooltip">Consistency<span class="tooltip">Weekly P&L over last 4 weeks (green
+                                    = profit)</span></th>
+                            <th>Trades</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="resultsTableBody">
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
@@ -322,15 +560,15 @@
         const progressBar = document.getElementById('progressBar');
         const tableBox = document.getElementById('tableBox');
         const resultsTableBody = document.getElementById('resultsTableBody');
+        const exclusionSummary = document.getElementById('exclusionSummary');
+        const exclusionGrid = document.getElementById('exclusionGrid');
+        const resultsSummary = document.getElementById('resultsSummary');
 
+        // ── Viewed Profiles (localStorage) ──
         function getViewedProfiles() {
-            try {
-                return JSON.parse(localStorage.getItem('viewedProfiles') || '[]');
-            } catch (e) {
-                return [];
-            }
+            try { return JSON.parse(localStorage.getItem('viewedProfiles') || '[]'); }
+            catch (e) { return []; }
         }
-
         function markProfileAsViewed(address) {
             const viewed = getViewedProfiles();
             if (!viewed.includes(address)) {
@@ -339,19 +577,53 @@
             }
         }
 
+        // ── API ──
         async function apiFetch(url) {
             const res = await fetch(url);
             if (!res.ok) throw new Error(`API Error: ${res.status}`);
             return res.json();
         }
 
-        async function fetchTopTraders(limit = 50) {
-            const url = `${DATA_API}/v1/leaderboard?timePeriod=ALL&orderBy=PNL&limit=${limit}`;
+        async function fetchLeaderboard(timePeriod, orderBy, limit = 50) {
+            const url = `${DATA_API}/v1/leaderboard?timePeriod=${timePeriod}&orderBy=${orderBy}&limit=${limit}`;
             const data = await apiFetch(url);
             return data.map(t => ({
                 address: t.proxyWallet,
                 username: t.userName,
+                source: `${timePeriod}-${orderBy}`,
             }));
+        }
+
+        async function fetchAllTraders(updateStatusFn) {
+            const sources = [
+                { timePeriod: 'ALL', orderBy: 'PNL', label: 'All-Time Top PnL' },
+                { timePeriod: 'ALL', orderBy: 'VOL', label: 'All-Time Top Volume' },
+                { timePeriod: 'MONTH', orderBy: 'PNL', label: 'Monthly Top PnL' },
+                { timePeriod: 'MONTH', orderBy: 'VOL', label: 'Monthly Top Volume' },
+                { timePeriod: 'WEEK', orderBy: 'PNL', label: 'Weekly Top PnL' },
+                { timePeriod: 'WEEK', orderBy: 'VOL', label: 'Weekly Top Volume' },
+            ];
+
+            const seen = new Set();
+            const allTraders = [];
+
+            for (let i = 0; i < sources.length; i++) {
+                const src = sources[i];
+                updateStatusFn(`Fetching ${src.label} leaderboard (${i + 1}/${sources.length})...`, Math.floor((i / sources.length) * 10));
+                try {
+                    const traders = await fetchLeaderboard(src.timePeriod, src.orderBy, 50);
+                    for (const t of traders) {
+                        if (!seen.has(t.address)) {
+                            seen.add(t.address);
+                            allTraders.push(t);
+                        }
+                    }
+                } catch (e) {
+                    console.error(`Error fetching ${src.label}:`, e);
+                }
+            }
+
+            return allTraders;
         }
 
         async function fetchClosedPositions(address) {
@@ -361,31 +633,104 @@
         }
 
         async function fetchActivity(address) {
-            // Fetch more than the limit to ensure we cover 30 days
             const url = `${DATA_API}/activity?user=${address}&limit=500`;
             const data = await apiFetch(url);
             return Array.isArray(data) ? data : [];
         }
 
+        // ── Helpers ──
+        function computeWeeklyPnl(positions, thirtyDaysAgo) {
+            // Split 30 days into 4 weekly buckets
+            const now = Date.now();
+            const weekMs = 7 * 24 * 60 * 60 * 1000;
+            const weeks = [0, 0, 0, 0]; // [oldest, ..., newest]
+            const weekHasTrades = [false, false, false, false];
+
+            for (const pos of positions) {
+                const ts = pos.timestamp * 1000;
+                if (ts < thirtyDaysAgo) continue;
+                const age = now - ts;
+                let weekIndex = 3 - Math.min(3, Math.floor(age / weekMs));
+                weeks[weekIndex] += parseFloat(pos.realizedPnl || '0');
+                weekHasTrades[weekIndex] = true;
+            }
+            return { weeks, weekHasTrades };
+        }
+
+        function computeQualityGrade(profitFactor, robustPF, winRate, consistencyScore, uniqueMarkets) {
+            // Composite score 0-100
+            let score = 0;
+
+            // PF contribution (0-30)
+            if (profitFactor === Infinity) score += 30;
+            else if (profitFactor >= 3) score += 28;
+            else if (profitFactor >= 2) score += 22;
+            else if (profitFactor >= 1.5) score += 15;
+            else score += 8;
+
+            // Robust PF contribution (0-25)
+            if (robustPF === Infinity) score += 25;
+            else if (robustPF >= 2) score += 22;
+            else if (robustPF >= 1.5) score += 18;
+            else if (robustPF >= 1.2) score += 12;
+            else score += 5;
+
+            // Win Rate contribution (0-15) — sweet spot 55-75%
+            if (winRate >= 55 && winRate <= 75) score += 15;
+            else if (winRate >= 50 && winRate <= 80) score += 10;
+            else score += 5;
+
+            // Consistency (0-20)
+            score += consistencyScore * 5; // 0-4 profitable weeks → 0-20
+
+            // Diversification (0-10)
+            if (uniqueMarkets >= 10) score += 10;
+            else if (uniqueMarkets >= 7) score += 7;
+            else score += 4;
+
+            if (score >= 80) return { grade: 'S', class: 'quality-s', score };
+            if (score >= 60) return { grade: 'A', class: 'quality-a', score };
+            return { grade: 'B', class: 'quality-b', score };
+        }
+
+        // ── Main Analysis ──
         startBtn.addEventListener('click', async () => {
             startBtn.disabled = true;
             statusBox.style.display = 'block';
             tableBox.style.display = 'none';
+            exclusionSummary.style.display = 'none';
+            resultsSummary.style.display = 'none';
             resultsTableBody.innerHTML = '';
 
             try {
-                updateStatus('Fetching Top 100 Traders from Leaderboard...', 5);
-                const traders = await fetchTopTraders(100);
+                updateStatus('Fetching traders from 6 leaderboard sources...', 2);
+                const traders = await fetchAllTraders(updateStatus);
+                updateStatus(`Found ${traders.length} unique traders. Starting analysis...`, 10);
                 const results = [];
 
-                const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000);
+                const now = Date.now();
+                const thirtyDaysAgo = now - (30 * 24 * 60 * 60 * 1000);
+                const sevenDaysAgo = now - (7 * 24 * 60 * 60 * 1000);
 
-                let excludedCounts = { count: 0, pf: 0, concentration: 0, inactive: 0 };
+                // Exclusion counters
+                const excluded = {
+                    noPositions: 0,
+                    lowTrades: 0,
+                    lowPF: 0,
+                    concentration: 0,
+                    lowVolume: 0,
+                    fewMarkets: 0,
+                    certaintyBuyer: 0,
+                    stale: 0,
+                    weakRobustPF: 0,
+                    fewClosedPos: 0,
+                    errors: 0,
+                };
 
                 for (let i = 0; i < traders.length; i++) {
                     const trader = traders[i];
                     const progress = 10 + Math.floor((i / traders.length) * 85);
-                    updateStatus(`Analyzing ${trader.username || 'Anonymous'} (${i + 1}/100)...`, progress);
+                    updateStatus(`Analyzing ${trader.username || 'Anonymous'} (${i + 1}/${traders.length})...`, progress);
 
                     try {
                         const [positions, activities] = await Promise.all([
@@ -396,20 +741,43 @@
                         const recentPositions = positions.filter(p => (p.timestamp * 1000) >= thirtyDaysAgo);
                         const recentTrades = activities.filter(a => a.type === 'TRADE' && (a.timestamp * 1000) >= thirtyDaysAgo);
 
+                        // ────── FILTER 1: No closed positions in 30 days ──────
                         if (recentPositions.length === 0) {
-                            excludedCounts.inactive++;
+                            excluded.noPositions++;
                             continue;
                         }
 
+                        // ────── FILTER 2: Min closed positions (statistical significance) ──────
+                        if (recentPositions.length < 5) {
+                            excluded.fewClosedPos++;
+                            continue;
+                        }
+
+                        // ────── FILTER 3: Min trade count ──────
+                        if (recentTrades.length < 10) {
+                            excluded.lowTrades++;
+                            continue;
+                        }
+
+                        // ────── FILTER 4: Recency — must have traded in last 7 days ──────
+                        const hasRecentTrade = activities.some(a => a.type === 'TRADE' && (a.timestamp * 1000) >= sevenDaysAgo);
+                        if (!hasRecentTrade) {
+                            excluded.stale++;
+                            continue;
+                        }
+
+                        // Calculate PnL metrics
                         let grossProfit = 0;
                         let grossLoss = 0;
                         let wins = 0;
                         let maxSingleProfit = 0;
                         let totalPnl = 0;
+                        const pnlList = [];
 
                         for (const pos of recentPositions) {
                             const pnl = parseFloat(pos.realizedPnl || '0');
                             totalPnl += pnl;
+                            pnlList.push(pnl);
                             if (pnl > 0) {
                                 grossProfit += pnl;
                                 wins++;
@@ -423,41 +791,86 @@
                         const winRate = (wins / recentPositions.length) * 100;
                         const avgPnl = totalPnl / recentPositions.length;
 
-                        // Filters
-                        if (recentTrades.length < 20) {
-                            excludedCounts.inactive++;
-                            continue;
-                        }
-
+                        // ────── FILTER 5: Min Profit Factor ──────
                         if (profitFactor < 1.3) {
-                            excludedCounts.pf++;
+                            excluded.lowPF++;
                             continue;
                         }
 
+                        // ────── FILTER 6: Single trade concentration (>40%) ──────
                         if (grossProfit > 0 && (maxSingleProfit / grossProfit) > 0.4) {
-                            excludedCounts.concentration++;
+                            excluded.concentration++;
                             continue;
                         }
+
+                        // ────── FILTER 7: Min USDC Volume ──────
+                        const totalVolume = recentPositions.reduce((sum, p) => sum + parseFloat(p.totalBought || '0'), 0);
+                        if (totalVolume < 5000) {
+                            excluded.lowVolume++;
+                            continue;
+                        }
+
+                        // ────── FILTER 8: Min unique markets ──────
+                        const uniqueMarkets = new Set(recentPositions.map(p => p.conditionId)).size;
+                        if (uniqueMarkets < 3) {
+                            excluded.fewMarkets++;
+                            continue;
+                        }
+
+                        // ────── FILTER 9: Near-certainty buyer (avg price > 0.90) ──────
+                        const avgBuyPrice = recentPositions.reduce((s, p) => s + (parseFloat(p.avgPrice || '0')), 0) / recentPositions.length;
+                        if (avgBuyPrice > 0.90) {
+                            excluded.certaintyBuyer++;
+                            continue;
+                        }
+
+                        // ────── FILTER 10: Robust PF (remove best trade) ──────
+                        const robustGrossProfit = grossProfit - maxSingleProfit;
+                        const robustPF = grossLoss === 0
+                            ? (robustGrossProfit > 0 ? Infinity : 0)
+                            : robustGrossProfit / grossLoss;
+                        if (robustPF < 1.0) {
+                            excluded.weakRobustPF++;
+                            continue;
+                        }
+
+                        // ── Consistency (weekly profitability) ──
+                        const { weeks, weekHasTrades } = computeWeeklyPnl(recentPositions, thirtyDaysAgo);
+                        const consistencyScore = weeks.filter((w, idx) => weekHasTrades[idx] && w > 0).length;
+
+                        // ── Quality Grade ──
+                        const quality = computeQualityGrade(profitFactor, robustPF, winRate, consistencyScore, uniqueMarkets);
 
                         results.push({
                             username: trader.username || 'Anonymous',
                             address: trader.address,
+                            source: trader.source || 'ALL-PNL',
                             profitFactor,
+                            robustPF,
                             winRate,
                             avgPnl,
+                            totalVolume,
+                            uniqueMarkets,
                             tradeCount: recentTrades.length,
-                            closedCount: recentPositions.length
+                            closedCount: recentPositions.length,
+                            weeks,
+                            weekHasTrades,
+                            consistencyScore,
+                            quality,
+                            avgBuyPrice,
                         });
                     } catch (e) {
                         console.error(`Error processing ${trader.address}:`, e);
+                        excluded.errors++;
                     }
                 }
 
-                results.sort((a, b) => b.profitFactor - a.profitFactor);
+                // Sort by quality score descending, then PF
+                results.sort((a, b) => b.quality.score - a.quality.score || b.profitFactor - a.profitFactor);
                 renderResults(results);
+                renderExclusionSummary(excluded, traders.length, results.length);
 
-                updateStatus(`Analysis Complete. ${results.length} matches found.`, 100);
-
+                updateStatus(`Analysis Complete. ${results.length} elite traders found out of ${traders.length} scanned.`, 100);
                 tableBox.style.display = 'block';
 
             } catch (err) {
@@ -472,12 +885,61 @@
             progressBar.style.width = `${progress}%`;
         }
 
+        function renderExclusionSummary(excluded, totalScanned, qualified) {
+            const totalExcluded = totalScanned - qualified;
+
+            const filters = [
+                { icon: '🚫', label: 'No Positions (30d)', count: excluded.noPositions, color: 'red' },
+                { icon: '📉', label: 'Few Closed Pos (<5)', count: excluded.fewClosedPos, color: 'red' },
+                { icon: '📊', label: 'Low Trades (<10)', count: excluded.lowTrades, color: 'amber' },
+                { icon: '⏰', label: 'Stale (No 7d Trade)', count: excluded.stale, color: 'cyan' },
+                { icon: '📈', label: 'Low PF (<1.3)', count: excluded.lowPF, color: 'amber' },
+                { icon: '🎯', label: 'Concentration (>40%)', count: excluded.concentration, color: 'purple' },
+                { icon: '💰', label: 'Low Volume (<$5k)', count: excluded.lowVolume, color: 'blue' },
+                { icon: '🌐', label: 'Few Markets (<3)', count: excluded.fewMarkets, color: 'blue' },
+                { icon: '🔒', label: 'Certainty Buyer (>90¢)', count: excluded.certaintyBuyer, color: 'rose' },
+                { icon: '🛡️', label: 'Weak Robust PF (<1.0)', count: excluded.weakRobustPF, color: 'purple' },
+                { icon: '⚠️', label: 'API Errors', count: excluded.errors, color: 'red' },
+            ];
+
+            exclusionGrid.innerHTML = filters
+                .filter(f => f.count > 0)
+                .map(f => `
+                    <div class="exclusion-card">
+                        <div class="exclusion-icon ${f.color}">${f.icon}</div>
+                        <div class="exclusion-info">
+                            <span class="exclusion-count">${f.count}</span>
+                            <span class="exclusion-label">${f.label}</span>
+                        </div>
+                    </div>
+                `).join('');
+
+            exclusionSummary.style.display = 'block';
+
+            // Summary bar
+            resultsSummary.style.display = 'block';
+            document.getElementById('sumScanned').textContent = totalScanned;
+            document.getElementById('sumExcluded').textContent = totalExcluded;
+            document.getElementById('sumQualified').textContent = qualified;
+            document.getElementById('sumPassRate').textContent = `${((qualified / totalScanned) * 100).toFixed(0)}%`;
+        }
+
         function renderResults(results) {
             const viewedProfiles = getViewedProfiles();
-            resultsTableBody.innerHTML = results.map(r => {
+            resultsTableBody.innerHTML = results.map((r, idx) => {
                 const isNew = !viewedProfiles.includes(r.address);
+
+                // Weekly consistency bars
+                const weekBars = r.weeks.map((w, i) => {
+                    if (!r.weekHasTrades[i]) return `<div class="week empty" style="height:3px" title="Week ${i + 1}: No trades"></div>`;
+                    const h = Math.min(20, Math.max(4, Math.abs(w) / 50 * 20));
+                    const cls = w > 0 ? 'profitable' : 'losing';
+                    return `<div class="week ${cls}" style="height:${h}px" title="Week ${i + 1}: $${w.toFixed(0)}"></div>`;
+                }).join('');
+
                 return `
                 <tr class="fade-in">
+                    <td style="color:var(--text-muted); font-weight:600;">${idx + 1}</td>
                     <td>
                         <div class="trader-info">
                             <div class="trader-info-header">
@@ -488,23 +950,28 @@
                                 ${isNew ? '<span class="badge-new">NEW</span>' : ''}
                             </div>
                             <span class="trader-address">${r.address.substring(0, 6)}...${r.address.substring(38)}</span>
+                            <span style="font-size:0.6rem;color:var(--primary);opacity:0.8;font-weight:600;letter-spacing:0.03em;">${r.source}</span>
                         </div>
                     </td>
-                    <td><span class="pf-value pnl-positive">${r.profitFactor === Infinity ? '∞' : r.profitFactor.toFixed(3)}</span></td>
+                    <td><span class="quality-badge ${r.quality.class}">${r.quality.grade} <small>(${r.quality.score})</small></span></td>
+                    <td><span class="pf-value pnl-positive">${r.profitFactor === Infinity ? '∞' : r.profitFactor.toFixed(2)}</span></td>
+                    <td><span class="pf-value" style="color:${r.robustPF >= 1.5 ? 'var(--accent)' : 'var(--accent-amber)'}">${r.robustPF === Infinity ? '∞' : r.robustPF.toFixed(2)}</span></td>
                     <td>${r.winRate.toFixed(1)}%</td>
                     <td class="${r.avgPnl >= 0 ? 'pnl-positive' : 'pnl-negative'}">$${r.avgPnl.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                    <td>${r.tradeCount} <small style="color:var(--text-muted)">(${r.closedCount} closed)</small></td>
-                    <td><span style="color:var(--accent); font-size: 0.8rem; font-weight: 700;">VERIFIED</span></td>
+                    <td>$${r.totalVolume >= 1000000 ? (r.totalVolume / 1000000).toFixed(1) + 'M' : r.totalVolume >= 1000 ? (r.totalVolume / 1000).toFixed(1) + 'K' : r.totalVolume.toFixed(0)}</td>
+                    <td style="text-align:center;">${r.uniqueMarkets}</td>
+                    <td><div class="consistency-bar">${weekBars}</div></td>
+                    <td>${r.tradeCount} <small style="color:var(--text-muted)">(${r.closedCount} pos)</small></td>
+                    <td><span style="color:var(--accent); font-size: 0.75rem; font-weight: 700;">✓ ELITE</span></td>
                 </tr>
             `;
             }).join('');
 
-            // Add click listeners to mark as viewed
+            // Click listeners for viewed tracking
             document.querySelectorAll('.profile-link').forEach(link => {
                 link.addEventListener('click', (e) => {
                     const address = e.currentTarget.getAttribute('data-address');
                     markProfileAsViewed(address);
-                    // Hide the badge immediately for this link
                     const badge = e.currentTarget.nextElementSibling;
                     if (badge && badge.classList.contains('badge-new')) {
                         badge.style.display = 'none';
