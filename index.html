@@ -684,7 +684,7 @@
                 const T7 = now - 7 * 86400000;
 
                 const ex = {
-                    noPos: 0, fewPos: 0, lowTrades: 0,
+                    noPos: 0, fewPos: 0, lowTrades: 0, hugeLoss: 0,
                     bot150day: 0, bot2min: 0, bot5min: 0, botTinyProfit: 0, botMM: 0,
                     lowPF: 0, negProfit: 0, concentration: 0,
                     belowMedianRisk: 0, errors: 0,
@@ -710,6 +710,10 @@
                         if (recentPos.length === 0) { ex.noPos++; continue; }
                         if (recentPos.length < 5) { ex.fewPos++; continue; }
                         if (recentTrades.length < 20) { ex.lowTrades++; continue; }
+
+                        // ── ALL-TIME LOSS CHECK ──
+                        const allTimePnl = positions.reduce((s, p) => s + parseFloat(p.realizedPnl || '0'), 0);
+                        if (allTimePnl < -1000) { ex.hugeLoss++; continue; }
 
                         // ── BOT DETECTION ──
                         // Rule 1: >150 trades in any single day
@@ -850,6 +854,7 @@
                 { i: '\ud83d\udeab', l: 'No Positions (30d)', n: ex.noPos, c: 'r' },
                 { i: '\ud83d\udcc9', l: 'Few Positions (<5)', n: ex.fewPos, c: 'r' },
                 { i: '\ud83d\udcca', l: 'Low Trades (<20)', n: ex.lowTrades, c: 'a' },
+                { i: '\ud83d\udca3', l: 'Huge All-Time Loss', n: ex.hugeLoss, c: 'r' },
                 { i: '\ud83e\udd16', l: 'Bot: >250/Day', n: ex.bot150day, c: 'o' },
                 { i: '\u23f1\ufe0f', l: 'Bot: <2min Avg Gap', n: ex.bot2min, c: 'o' },
                 { i: '\u26a1', l: 'Bot: >70% Quick Flip', n: ex.bot5min, c: 'o' },
