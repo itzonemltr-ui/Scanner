@@ -60,9 +60,9 @@ async function fetchActivity(address) {
  * Main calculation logic
  */
 async function calculateProfitFactors() {
-    const traders = await fetchTopTraders(50);
+    const traders = await fetchTopTraders(100);
     const results = [];
-    
+
     // 30 days ago timestamp
     const now = Date.now();
     const thirtyDaysAgo = now - (30 * 24 * 60 * 60 * 1000);
@@ -70,7 +70,7 @@ async function calculateProfitFactors() {
 
     for (const trader of traders) {
         process.stdout.write(`Processing ${trader.username || trader.address}... `);
-        
+
         // Fetch data
         const [positions, activities] = await Promise.all([
             fetchClosedPositions(trader.address),
@@ -79,7 +79,7 @@ async function calculateProfitFactors() {
 
         // Filter closed positions in the last 30 days
         const recentPositions = positions.filter(p => (p.timestamp * 1000) >= thirtyDaysAgo);
-        
+
         // Filter trades in activities in the last 30 days
         const recentTradesCount = activities.filter(a => a.type === 'TRADE' && (a.timestamp * 1000) >= thirtyDaysAgo).length;
 

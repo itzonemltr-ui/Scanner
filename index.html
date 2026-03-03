@@ -243,7 +243,7 @@
     <div class="container">
         <header>
             <h1>Polymarket Pro Analytics</h1>
-            <p class="subtitle">Top 50 Traders Profit Factor • 30 Day Rolling Window</p>
+            <p class="subtitle">Top 100 Traders Profit Factor • 30 Day Rolling Window</p>
         </header>
 
         <div class="controls">
@@ -321,8 +321,8 @@
             resultsTableBody.innerHTML = '';
 
             try {
-                updateStatus('Fetching Top 50 Traders from Leaderboard...', 5);
-                const traders = await fetchTopTraders(50);
+                updateStatus('Fetching Top 100 Traders from Leaderboard...', 5);
+                const traders = await fetchTopTraders(100);
                 const results = [];
 
                 const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000);
@@ -332,7 +332,7 @@
                 for (let i = 0; i < traders.length; i++) {
                     const trader = traders[i];
                     const progress = 10 + Math.floor((i / traders.length) * 85);
-                    updateStatus(`Analyzing ${trader.username || 'Anonymous'} (${i + 1}/50)...`, progress);
+                    updateStatus(`Analyzing ${trader.username || 'Anonymous'} (${i + 1}/100)...`, progress);
 
                     try {
                         const [positions, activities] = await Promise.all([
@@ -403,13 +403,7 @@
                 results.sort((a, b) => b.profitFactor - a.profitFactor);
                 renderResults(results);
 
-                const totalExcluded = excludedCounts.inactive + excludedCounts.pf + excludedCounts.concentration;
-                updateStatus(`Analysis Complete. ${results.length} matched / ${totalExcluded} excluded.`, 100);
-
-                // Show summary alert if many were excluded
-                if (totalExcluded > 0) {
-                    showExclusionSummary(results.length, excludedCounts);
-                }
+                updateStatus(`Analysis Complete. ${results.length} matches found.`, 100);
 
                 tableBox.style.display = 'block';
 
@@ -419,21 +413,6 @@
                 startBtn.disabled = false;
             }
         });
-
-        function showExclusionSummary(matches, counts) {
-            const summaryDiv = document.createElement('div');
-            summaryDiv.className = 'fade-in';
-            summaryDiv.style.cssText = 'background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); padding: 1rem; border-radius: 0.5rem; margin-bottom: 2rem; color: #fca5a5; font-size: 0.9rem;';
-            summaryDiv.innerHTML = `
-                <strong>Analysis Conclusion:</strong> Only <strong>${matches}</strong> of the Top 50 traders meet your strict criteria for the last 30 days.<br>
-                <ul style="margin-top: 0.5rem; margin-left:1.5rem;">
-                    <li>${counts.inactive} were excluded for being inactive (< 20 trades).</li>
-                    <li>${counts.pf} were excluded for low Profit Factor (< 1.3).</li>
-                    <li>${counts.concentration} were excluded for high profit concentration (> 40%).</li>
-                </ul>
-            `;
-            statusBox.after(summaryDiv);
-        }
 
         function updateStatus(text, progress) {
             statusText.innerText = text;
