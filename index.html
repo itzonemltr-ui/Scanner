@@ -1151,8 +1151,11 @@
                 const traders = await fetchAllTraders(upd);
                 upd(`Found ${traders.length} unique traders. Scanning for Insiders...`, 10);
 
+                const now = Date.now();
+                const T30 = now - 30 * 86400000;
+
                 const ex = {
-                    noPos: 0, lowWinRate: 0, smallScale: 0, errors: 0
+                    noPos: 0, oldWallet: 0, lowWinRate: 0, smallScale: 0, errors: 0
                 };
 
                 const candidates = [];
@@ -1168,6 +1171,12 @@
                         ]);
 
                         if (positions.length === 0 && activities.length === 0) { ex.noPos++; continue; }
+
+                        const oldestActivity = activities[activities.length - 1];
+                        if (oldestActivity && (oldestActivity.timestamp * 1000) < T30) {
+                            ex.oldWallet++;
+                            continue;
+                        }
 
                         let wins = 0;
                         let maxSingleBet = 0;
@@ -1258,10 +1267,11 @@
                     // Render Exclusions
                     const total = traders.length;
                     const qualified = top50.length;
-                    const filterTotal = total - qualified - ex.noPos - ex.errors;
+                    const filterTotal = total - qualified - ex.noPos - ex.oldWallet - ex.errors;
 
                     const cards = [
                         { i: '🚫', l: 'No Activity', n: ex.noPos, c: 'r' },
+                        { i: '📅', l: 'Old Wallet (>1mo)', n: ex.oldWallet, c: 'o' },
                         { i: '📉', l: 'Win Rate < 80%', n: ex.lowWinRate, c: 'a' },
                         { i: '🐟', l: 'Small Bets/PnL', n: ex.smallScale, c: 'c' },
                         { i: '⚠️', l: 'API Errors', n: ex.errors, c: 'r' },
@@ -1290,6 +1300,7 @@
                 } else {
                     const cards = [
                         { i: '🚫', l: 'No Activity', n: ex.noPos, c: 'r' },
+                        { i: '📅', l: 'Old Wallet (>1mo)', n: ex.oldWallet, c: 'o' },
                         { i: '📉', l: 'Win Rate < 80%', n: ex.lowWinRate, c: 'a' },
                         { i: '🐟', l: 'Small Bets/PnL', n: ex.smallScale, c: 'c' },
                         { i: '⚠️', l: 'API Errors', n: ex.errors, c: 'r' },
