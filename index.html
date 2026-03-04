@@ -486,6 +486,9 @@
 
         <div class="controls">
             <button id="startBtn">🔍 Run Elite Scan</button>
+            <button id="startWhalesBtn"
+                style="background:var(--accent);box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);">🐋 Run New Whales
+                Scan</button>
         </div>
 
         <div class="status-box" id="statusBox">
@@ -528,7 +531,7 @@
         <div class="table-wrap" id="tableWrap">
             <div class="table-scroll">
                 <table>
-                    <thead>
+                    <thead id="thead">
                         <tr>
                             <th>#</th>
                             <th>Trader</th>
@@ -559,6 +562,7 @@
 
         // ── DOM refs ──
         const startBtn = document.getElementById('startBtn');
+        const startWhalesBtn = document.getElementById('startWhalesBtn');
         const statusBox = document.getElementById('statusBox');
         const statusText = document.getElementById('statusText');
         const progressBar = document.getElementById('progressBar');
@@ -664,9 +668,42 @@
             return { g: 'B', c: 'qb', s };
         }
 
+        // ── Header Constants ──
+        const ELITE_HEADERS = `<tr>
+            <th>#</th>
+            <th>Trader</th>
+            <th class="tip" data-tip="Composite quality grade">Grade</th>
+            <th class="tip" data-tip="Total trade count in 30d">Trades</th>
+            <th class="tip" data-tip="Total USDC volume">Volume</th>
+            <th class="tip" data-tip="Gross Profit / Gross Loss">PF</th>
+            <th class="tip" data-tip="PF without best trade">Robust PF</th>
+            <th class="tip" data-tip="Win rate percentage">Win%</th>
+            <th class="tip" data-tip="Net profit in USDC">Net PnL</th>
+            <th class="tip" data-tip="Average profit per trade">Avg PnL</th>
+            <th class="tip" data-tip="Maximum peak-to-trough decline">Max DD</th>
+            <th class="tip" data-tip="Std deviation of per-trade returns">Volatility</th>
+            <th class="tip" data-tip="Net Profit / Volatility">Risk Adj</th>
+            <th class="tip" data-tip="Weekly P&L bars (4 weeks)">Consistency</th>
+            <th class="tip" data-tip="Unique markets traded">Mkts</th>
+            <th>Status</th>
+        </tr>`;
+
+        const WHALE_HEADERS = `<tr>
+            <th>#</th>
+            <th>Trader</th>
+            <th class="tip" data-tip="Age of wallet in days">Age (Days)</th>
+            <th class="tip" data-tip="Total trade count">Trades</th>
+            <th class="tip" data-tip="Total USDC volume">Total Volume</th>
+            <th class="tip" data-tip="Largest single USDC bet">Max Single Bet</th>
+            <th class="tip" data-tip="Net PnL of wallet">Net PnL</th>
+            <th>Status</th>
+        </tr>`;
+
         // ── Main ──
         startBtn.addEventListener('click', async () => {
+            document.getElementById('thead').innerHTML = ELITE_HEADERS;
             startBtn.disabled = true;
+            startWhalesBtn.disabled = true;
             statusBox.style.display = 'block';
             tableWrap.style.display = 'none';
             summaryStrip.style.display = 'none';
@@ -799,6 +836,7 @@
                 upd(`Error: ${err.message}`, 0);
             } finally {
                 startBtn.disabled = false;
+                startWhalesBtn.disabled = false;
             }
         });
 
@@ -880,6 +918,200 @@
                 });
             });
         }
+
+        function renderWhales(results) {
+            const viewed = getViewed();
+            tbody.innerHTML = results.map((r, i) => {
+                const isNew = !viewed.includes(r.address);
+                const fmtAmt = v => `$${v.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+
+                return `<tr class="fade-in">
+                    <td class="bold" style="color:var(--text-muted)">${i + 1}</td>
+                    <td>
+                        <a href="https://polymarket.com/profile/${r.address}" target="_blank" class="trader-link plink" data-addr="${r.address}">${r.username}</a>${isNew ? '<span class="badge-new">NEW</span>' : ''}
+                        <br><span class="addr">${r.address.slice(0, 6)}...${r.address.slice(-4)}</span>
+                        <span class="src-tag">${r.source}</span>
+                    </td>
+                    <td><span class="qbadge qa">${r.ageDays}d <small>OLD</small></span></td>
+                    <td>${r.totalTrades}</td>
+                    <td class="mono">${fmtAmt(r.totalVolume)}</td>
+                    <td class="bold mono green" style="font-size:0.95rem">${fmtAmt(r.maxSingleBet)}</td>
+                    <td class="bold ${r.netPnl >= 0 ? 'green' : 'red'}">${fmtAmt(r.netPnl)}</td>
+                    <td><span class="green bold" style="font-size:0.7rem">🐋 WHALE</span></td>
+                </tr>`;
+            }).join('');
+
+            document.querySelectorAll('.plink').forEach(l => {
+                l.addEventListener('click', e => {
+                    markViewed(e.currentTarget.dataset.addr);
+                    const b = e.currentTarget.parentElement.querySelector('.badge-new');
+                    if (b) b.style.display = 'none';
+                });
+            });
+        }
+
+        // ── Whales Main ──
+        startWhalesBtn.addEventListener('click', async () => {
+            document.getElementById('thead').innerHTML = WHALE_HEADERS;
+            startBtn.disabled = true;
+            startWhalesBtn.disabled = true;
+            statusBox.style.display = 'block';
+            tableWrap.style.display = 'none';
+            summaryStrip.style.display = 'none';
+            exclSection.style.display = 'none';
+            tbody.innerHTML = '';
+
+            const upd = (t, p) => {
+                statusText.textContent = t; progressBar.style.width = \`\${p}%\`; };
+
+            try {
+                const traders = await fetchAllTraders(upd);
+                upd(\`Found \${traders.length} unique traders. Scanning for New Whales...\`, 10);
+
+                const now = Date.now();
+                const T30 = now - 30 * 86400000;
+
+                const ex = {
+                    noPos: 0, oldWallet: 0, noBigBet: 0, errors: 0
+                };
+
+                const candidates = [];
+
+                for (let i = 0; i < traders.length; i++) {
+                    const trader = traders[i];
+                    upd(\`[Scanning] \${trader.username || 'Anon'} (\${i + 1}/\${traders.length})\`, 10 + Math.floor((i / traders.length) * 80));
+
+                    try {
+                        const activities = await fetchActivity(trader.address);
+                        
+                        if (activities.length === 0) { ex.noPos++; continue; }
+
+                        const oldestActivity = activities[activities.length - 1];
+                        const oldestTs = oldestActivity.timestamp * 1000;
+                        if (oldestTs < T30) {
+                            ex.oldWallet++;
+                            continue;
+                        }
+
+                        let maxSingleBet = 0;
+                        let netPnl = 0;
+                        let totalVolume = 0;
+                        
+                        // Calculate max bet and volume from activities
+                        for (const act of activities) {
+                            if (act.type === 'TRADE') {
+                                const size = parseFloat(act.usdcSize || '0');
+                                totalVolume += size;
+                                if (size > maxSingleBet) {
+                                    maxSingleBet = size;
+                                }
+                            }
+                        }
+
+                        // Fetch positions for PnL
+                        const positions = await fetchClosedPositions(trader.address);
+                        for (const pos of positions) {
+                            netPnl += parseFloat(pos.realizedPnl || '0');
+                            const posTotBought = parseFloat(pos.totalBought || '0');
+                            if (posTotBought > maxSingleBet) {
+                                maxSingleBet = posTotBought;
+                            }
+                            totalVolume += posTotBought; // Positions also indicate volume
+                        }
+
+                        // Whale condition: max bet > 5k USDC
+                        if (maxSingleBet < 5000) {
+                            ex.noBigBet++;
+                            continue;
+                        }
+
+                        const ageDays = Math.max(1, Math.floor((now - oldestTs) / 86400000));
+
+                        candidates.push({
+                            username: trader.username || 'Anonymous',
+                            address: trader.address,
+                            source: trader.source,
+                            totalTrades: activities.length,
+                            totalVolume,
+                            maxSingleBet,
+                            netPnl,
+                            ageDays
+                        });
+                    } catch (e) {
+                        console.error(\`Error \${trader.address}:\`, e);
+                        ex.errors++;
+                    }
+                }
+
+                upd('Sorting New Whales...', 95);
+
+                if (candidates.length > 0) {
+                    candidates.sort((a, b) => b.maxSingleBet - a.maxSingleBet);
+                    
+                    const top50 = candidates.slice(0, 50);
+
+                    renderWhales(top50);
+                    
+                    // Render exclusion
+                    const total = traders.length;
+                    const qualified = top50.length;
+                    const filterTotal = total - qualified - ex.noPos - ex.errors;
+
+                    const cards = [
+                        { i: '🚫', l: 'No Activity', n: ex.noPos, c: 'r' },
+                        { i: '📅', l: 'Old Wallet (>1mo)', n: ex.oldWallet, c: 'o' },
+                        { i: '🐟', l: 'Small Bet Size (<$5k)', n: ex.noBigBet, c: 'a' },
+                        { i: '⚠️', l: 'API Errors', n: ex.errors, c: 'r' },
+                    ];
+
+                    exclGrid.innerHTML = cards.filter(c => c.n > 0).map(c => \`
+                        <div class="excl-card">
+                            <div class="excl-icon \${c.c}">\${c.i}</div>
+                            <div>
+                                <div class="excl-count">\${c.n}</div>
+                                <div class="excl-label">\${c.l}</div>
+                            </div>
+                        </div>
+                    \`).join('');
+                    exclSection.style.display = 'block';
+
+                    summaryStrip.style.display = 'block';
+                    document.getElementById('ssScanned').textContent = total;
+                    document.getElementById('ssBots').textContent = 0;
+                    document.getElementById('ssFiltered').textContent = total - qualified;
+                    document.getElementById('ssElite').textContent = qualified;
+                    document.getElementById('ssRate').textContent = \`\${total > 0 ? ((qualified / total) * 100).toFixed(0) : 0}%\`;
+
+                    upd(\`Done! \${top50.length} new whales found from \${traders.length} scanned.\`, 100);
+                    tableWrap.style.display = 'block';
+                } else {
+                    // Update exclusion rendering for 0 found
+                     const cards = [
+                        { i: '🚫', l: 'No Activity', n: ex.noPos, c: 'r' },
+                        { i: '📅', l: 'Old Wallet (>1mo)', n: ex.oldWallet, c: 'o' },
+                        { i: '🐟', l: 'Small Bet Size (<$5k)', n: ex.noBigBet, c: 'a' },
+                        { i: '⚠️', l: 'API Errors', n: ex.errors, c: 'r' },
+                    ];
+                    exclGrid.innerHTML = cards.filter(c => c.n > 0).map(c => \`
+                        <div class="excl-card">
+                            <div class="excl-icon \${c.c}">\${c.i}</div>
+                            <div>
+                                <div class="excl-count">\${c.n}</div>
+                                <div class="excl-label">\${c.l}</div>
+                            </div>
+                        </div>
+                    \`).join('');
+                    exclSection.style.display = 'block';
+                    upd(\`Done. No new whales found from \${traders.length} scanned.\`, 100);
+                }
+
+            } catch (err) {
+                upd(\`Error: \${err.message}\`, 0);
+            } finally {
+                startBtn.disabled = false;
+                startWhalesBtn.disabled = false;
+            }
+        });
     </script>
 </body>
 
