@@ -962,11 +962,12 @@
             tbody.innerHTML = '';
 
             const upd = (t, p) => {
-                statusText.textContent = t; progressBar.style.width = \`\${p}%\`; };
+                statusText.textContent = t; progressBar.style.width = `${p}%`;
+            };
 
             try {
                 const traders = await fetchAllTraders(upd);
-                upd(\`Found \${traders.length} unique traders. Scanning for New Whales...\`, 10);
+                upd(`Found ${traders.length} unique traders. Scanning for New Whales...`, 10);
 
                 const now = Date.now();
                 const T30 = now - 30 * 86400000;
@@ -979,11 +980,11 @@
 
                 for (let i = 0; i < traders.length; i++) {
                     const trader = traders[i];
-                    upd(\`[Scanning] \${trader.username || 'Anon'} (\${i + 1}/\${traders.length})\`, 10 + Math.floor((i / traders.length) * 80));
+                    upd(`[Scanning] ${trader.username || 'Anon'} (${i + 1}/${traders.length})`, 10 + Math.floor((i / traders.length) * 80));
 
                     try {
                         const activities = await fetchActivity(trader.address);
-                        
+
                         if (activities.length === 0) { ex.noPos++; continue; }
 
                         const oldestActivity = activities[activities.length - 1];
@@ -996,7 +997,7 @@
                         let maxSingleBet = 0;
                         let netPnl = 0;
                         let totalVolume = 0;
-                        
+
                         // Calculate max bet and volume from activities
                         for (const act of activities) {
                             if (act.type === 'TRADE') {
@@ -1038,7 +1039,7 @@
                             ageDays
                         });
                     } catch (e) {
-                        console.error(\`Error \${trader.address}:\`, e);
+                        console.error(`Error ${trader.address}:`, e);
                         ex.errors++;
                     }
                 }
@@ -1047,11 +1048,11 @@
 
                 if (candidates.length > 0) {
                     candidates.sort((a, b) => b.maxSingleBet - a.maxSingleBet);
-                    
+
                     const top50 = candidates.slice(0, 50);
 
                     renderWhales(top50);
-                    
+
                     // Render exclusion
                     const total = traders.length;
                     const qualified = top50.length;
@@ -1064,15 +1065,15 @@
                         { i: '⚠️', l: 'API Errors', n: ex.errors, c: 'r' },
                     ];
 
-                    exclGrid.innerHTML = cards.filter(c => c.n > 0).map(c => \`
+                    exclGrid.innerHTML = cards.filter(c => c.n > 0).map(c => `
                         <div class="excl-card">
-                            <div class="excl-icon \${c.c}">\${c.i}</div>
+                            <div class="excl-icon ${c.c}">${c.i}</div>
                             <div>
-                                <div class="excl-count">\${c.n}</div>
-                                <div class="excl-label">\${c.l}</div>
+                                <div class="excl-count">${c.n}</div>
+                                <div class="excl-label">${c.l}</div>
                             </div>
                         </div>
-                    \`).join('');
+                    `).join('');
                     exclSection.style.display = 'block';
 
                     summaryStrip.style.display = 'block';
@@ -1080,33 +1081,33 @@
                     document.getElementById('ssBots').textContent = 0;
                     document.getElementById('ssFiltered').textContent = total - qualified;
                     document.getElementById('ssElite').textContent = qualified;
-                    document.getElementById('ssRate').textContent = \`\${total > 0 ? ((qualified / total) * 100).toFixed(0) : 0}%\`;
+                    document.getElementById('ssRate').textContent = `${total > 0 ? ((qualified / total) * 100).toFixed(0) : 0}%`;
 
-                    upd(\`Done! \${top50.length} new whales found from \${traders.length} scanned.\`, 100);
+                    upd(`Done! ${top50.length} new whales found from ${traders.length} scanned.`, 100);
                     tableWrap.style.display = 'block';
                 } else {
                     // Update exclusion rendering for 0 found
-                     const cards = [
+                    const cards = [
                         { i: '🚫', l: 'No Activity', n: ex.noPos, c: 'r' },
                         { i: '📅', l: 'Old Wallet (>1mo)', n: ex.oldWallet, c: 'o' },
                         { i: '🐟', l: 'Small Bet Size (<$5k)', n: ex.noBigBet, c: 'a' },
                         { i: '⚠️', l: 'API Errors', n: ex.errors, c: 'r' },
                     ];
-                    exclGrid.innerHTML = cards.filter(c => c.n > 0).map(c => \`
+                    exclGrid.innerHTML = cards.filter(c => c.n > 0).map(c => `
                         <div class="excl-card">
-                            <div class="excl-icon \${c.c}">\${c.i}</div>
+                            <div class="excl-icon ${c.c}">${c.i}</div>
                             <div>
-                                <div class="excl-count">\${c.n}</div>
-                                <div class="excl-label">\${c.l}</div>
+                                <div class="excl-count">${c.n}</div>
+                                <div class="excl-label">${c.l}</div>
                             </div>
                         </div>
-                    \`).join('');
+                    `).join('');
                     exclSection.style.display = 'block';
-                    upd(\`Done. No new whales found from \${traders.length} scanned.\`, 100);
+                    upd(`Done. No new whales found from ${traders.length} scanned.`, 100);
                 }
 
             } catch (err) {
-                upd(\`Error: \${err.message}\`, 0);
+                upd(`Error: ${err.message}`, 0);
             } finally {
                 startBtn.disabled = false;
                 startWhalesBtn.disabled = false;
