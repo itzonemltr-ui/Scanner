@@ -1172,8 +1172,25 @@
 
                         if (positions.length === 0 && activities.length === 0) { ex.noPos++; continue; }
 
-                        const oldestActivity = activities[activities.length - 1];
-                        if (oldestActivity && (oldestActivity.timestamp * 1000) < T30) {
+                        let oldestTs = Date.now();
+
+                        // Check activities for oldest timestamp
+                        if (activities.length > 0) {
+                            const oldestAct = activities[activities.length - 1];
+                            oldestTs = Math.min(oldestTs, oldestAct.timestamp * 1000);
+                        }
+
+                        // Check positions for oldest timestamp
+                        if (positions.length > 0) {
+                            // Positions might not be sorted by time, so check all
+                            for (const pos of positions) {
+                                if (pos.timestamp) {
+                                    oldestTs = Math.min(oldestTs, pos.timestamp * 1000);
+                                }
+                            }
+                        }
+
+                        if (oldestTs < T30) {
                             ex.oldWallet++;
                             continue;
                         }
