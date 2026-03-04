@@ -6,34 +6,18 @@ deployment:
     # Create deployment directory if not exists
     - /bin/mkdir -p $DEPLOYPATH
 
-    # Copy all web files (HTML, CSS, JS, PHP)
-    - /bin/cp -R *.html $DEPLOYPATH 2>/dev/null || true
-    - /bin/cp -R *.css $DEPLOYPATH 2>/dev/null || true
-    - /bin/cp -R *.js $DEPLOYPATH 2>/dev/null || true
-    - /bin/cp -R *.php $DEPLOYPATH 2>/dev/null || true
+    # Copy individual web files
+    - /bin/cp index.html $DEPLOYPATH 2>/dev/null || true
+    - /bin/cp index.php $DEPLOYPATH 2>/dev/null || true
+    - /bin/cp style.css $DEPLOYPATH 2>/dev/null || true
+    - /bin/cp app.js $DEPLOYPATH 2>/dev/null || true
+    - /bin/cp main.js $DEPLOYPATH 2>/dev/null || true
+    - /bin/cp server.js $DEPLOYPATH 2>/dev/null || true
+    - /bin/cp package.json $DEPLOYPATH 2>/dev/null || true
+    - /bin/cp package-lock.json $DEPLOYPATH 2>/dev/null || true
+    - /bin/cp .env $DEPLOYPATH 2>/dev/null || true
 
-    # Copy image files
-    - /bin/cp -R *.jpeg $DEPLOYPATH 2>/dev/null || true
-    - /bin/cp -R *.jpg $DEPLOYPATH 2>/dev/null || true
-    - /bin/cp -R *.png $DEPLOYPATH 2>/dev/null || true
-    - /bin/cp -R *.svg $DEPLOYPATH 2>/dev/null || true
-    - /bin/cp -R *.gif $DEPLOYPATH 2>/dev/null || true
-    - /bin/cp -R *.ico $DEPLOYPATH 2>/dev/null || true
-    - /bin/cp -R *.webp $DEPLOYPATH 2>/dev/null || true
-
-    # Copy config & environment files
-    - /bin/cp -R *.json $DEPLOYPATH 2>/dev/null || true
-    - /bin/cp -R *.env $DEPLOYPATH 2>/dev/null || true
-    - /bin/cp -R .env $DEPLOYPATH 2>/dev/null || true
-    - /bin/cp -R *.xml $DEPLOYPATH 2>/dev/null || true
-    - /bin/cp -R *.yml $DEPLOYPATH 2>/dev/null || true
-
-    # Copy database files (SQL, SQLite)
-    - /bin/cp -R *.sql $DEPLOYPATH 2>/dev/null || true
-    - /bin/cp -R *.sqlite $DEPLOYPATH 2>/dev/null || true
-    - /bin/cp -R *.db $DEPLOYPATH 2>/dev/null || true
-
-    # Copy subfolders (src, assets, includes, api, etc.) — exclude node_modules
+    # Copy subfolders
     - /bin/cp -R src $DEPLOYPATH 2>/dev/null || true
     - /bin/cp -R assets $DEPLOYPATH 2>/dev/null || true
     - /bin/cp -R css $DEPLOYPATH 2>/dev/null || true
@@ -45,7 +29,6 @@ deployment:
     - /bin/cp -R config $DEPLOYPATH 2>/dev/null || true
     - /bin/cp -R lib $DEPLOYPATH 2>/dev/null || true
     - /bin/cp -R vendor $DEPLOYPATH 2>/dev/null || true
-    - /bin/cp -R uploads $DEPLOYPATH 2>/dev/null || true
     - /bin/cp -R public $DEPLOYPATH 2>/dev/null || true
     - /bin/cp -R routes $DEPLOYPATH 2>/dev/null || true
     - /bin/cp -R models $DEPLOYPATH 2>/dev/null || true
@@ -54,5 +37,5 @@ deployment:
     - /bin/cp -R middleware $DEPLOYPATH 2>/dev/null || true
     - /bin/cp -R database $DEPLOYPATH 2>/dev/null || true
 
-    # Node.js — install dependencies on server (excludes node_modules from upload)
+    # Node.js — install dependencies on server
     - cd $DEPLOYPATH && /usr/local/bin/npm install --production 2>/dev/null || true
