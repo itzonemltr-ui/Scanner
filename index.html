@@ -600,9 +600,28 @@
         const exclSection = document.getElementById('exclSection');
         const exclGrid = document.getElementById('exclGrid');
 
-        // ── Viewed profiles ──
-        function getViewed() { try { return JSON.parse(localStorage.getItem('vp') || '[]'); } catch { return []; } }
-        function markViewed(a) { const v = getViewed(); if (!v.includes(a)) { v.push(a); localStorage.setItem('vp', JSON.stringify(v)); } }
+        // ── Viewed profiles (Server-Side) ──
+        async function getViewed() {
+            try {
+                const r = await fetch('api_viewed.php');
+                const d = await r.json();
+                return Array.isArray(d) ? d : [];
+            } catch (e) {
+                console.error("Error fetching viewed:", e);
+                return [];
+            }
+        }
+        async function markViewed(a) {
+            try {
+                await fetch('api_viewed.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ address: a })
+                });
+            } catch (e) {
+                console.error("Error marking viewed:", e);
+            }
+        }
 
         // ── API helpers ──
         async function api(url) { const r = await fetch(url); if (!r.ok) throw new Error(`API ${r.status}`); return r.json(); }
@@ -1211,7 +1230,7 @@
                 upd(`Analyzing ${uniqueAddresses.length} Elon market specialists...`, 20);
 
                 const candidates = [];
-                const viewed = getViewed();
+                const viewed = await getViewed();
 
                 for (let i = 0; i < uniqueAddresses.length; i++) {
                     const addr = uniqueAddresses[i];
@@ -1272,8 +1291,8 @@
                     }).join('');
 
                     document.querySelectorAll('.plink').forEach(l => {
-                        l.addEventListener('click', e => {
-                            markViewed(e.currentTarget.dataset.addr);
+                        l.addEventListener('click', async e => {
+                            await markViewed(e.currentTarget.dataset.addr);
                             const b = e.currentTarget.parentElement.querySelector('.badge-new');
                             if (b) b.style.display = 'none';
                         });
