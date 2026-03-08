@@ -1206,7 +1206,7 @@
                             });
 
                             const accuracy = (wins / elonPos.length) * 100;
-                            if (accuracy >= 80) {
+                            if (accuracy >= 70) {
                                 candidates.push({
                                     address: trader.address,
                                     username: trader.username || 'Anon',
@@ -1249,10 +1249,10 @@
                         });
                     });
 
-                    upd(`Done! Found ${candidates.length} high-accuracy Elon traders.`, 100);
+                    upd(`Done! Found ${candidates.length} traders with >= 70% Elon accuracy.`, 100);
                     tableWrap.style.display = 'block';
                 } else {
-                    upd("Done. No traders found meeting the 80% accuracy criteria.", 100);
+                    upd("Done. No traders found meeting the 70% accuracy criteria.", 100);
                 }
 
             } catch (err) {
