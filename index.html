@@ -1232,7 +1232,7 @@
                             });
 
                             const accuracy = (wins / elonPos.length) * 100;
-                            if (accuracy >= 70) {
+                            if (accuracy >= 70 && totalPnl >= 500) {
                                 candidates.push({ address: addr, username, accuracy, trades: elonPos.length, pnl: totalPnl });
                             }
                         }
@@ -1269,10 +1269,10 @@
                         });
                     });
 
-                    upd(`Done! Found ${candidates.length} Elon specialists with >= 70% accuracy.`, 100);
+                    upd(`Done! Found ${candidates.length} Elon specialists with >= 70% accuracy & $500+ PnL.`, 100);
                     tableWrap.style.display = 'block';
                 } else {
-                    upd("Done. No specialists found meeting the criteria in the targeted markets.", 100);
+                    upd("Done. No specialists found meeting accuracy (70%) and PnL ($500) criteria.", 100);
                 }
 
             } catch (err) {
