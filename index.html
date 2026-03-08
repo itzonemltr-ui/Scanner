@@ -1175,68 +1175,54 @@
             tbody.innerHTML = '';
 
             const upd = (t, p) => { statusText.textContent = t; progressBar.style.width = `${p}%`; };
-            const proxy = url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
 
             try {
-                upd("Finding Elon Musk Tweet markets...", 5);
-                const gammaSearch = await fetch(proxy(`https://gamma-api.polymarket.com/events?q=Elon%20Musk%20Tweet&active=true&limit=20`));
-                const events = await gammaSearch.json();
+                upd("Fetching top traders for analysis...", 5);
+                const traders = await fetchAllTraders(upd);
+                upd(`Analyzing ${traders.length} elite traders for Elon accuracy...`, 10);
 
-                const conditionIds = [];
-                events.forEach(ev => {
-                    if (ev.markets) {
-                        ev.markets.forEach(m => {
-                            if (m.conditionId) conditionIds.push(m.conditionId);
-                        });
-                    }
-                });
+                const candidates = [];
+                const viewed = getViewed();
 
-                if (conditionIds.length === 0) {
-                    throw new Error("No Elon Tweet markets found.");
-                }
-
-                upd(`Found ${conditionIds.length} market conditions. Fetching participants...`, 15);
-
-                const stats = {}; // { address: { wins: 0, total: 0, pnl: 0, username: '' } }
-
-                for (let i = 0; i < conditionIds.length; i++) {
-                    const cid = conditionIds[i];
-                    upd(`Fetching participants for market ${i + 1}/${conditionIds.length}...`, 15 + Math.floor((i / conditionIds.length) * 60));
+                for (let i = 0; i < traders.length; i++) {
+                    const trader = traders[i];
+                    upd(`Analyzing ${trader.username || 'Anon'} (${i + 1}/${traders.length})`, 10 + Math.floor((i / traders.length) * 85));
 
                     try {
-                        const posResp = await fetch(proxy(`https://data-api.polymarket.com/v1/market-positions?market=${cid}&status=CLOSED`));
-                        const positions = await posResp.json();
+                        const positions = await fetchClosedPositions(trader.address);
 
-                        if (Array.isArray(positions)) {
-                            positions.forEach(p => {
-                                const addr = p.user;
-                                if (!stats[addr]) {
-                                    stats[addr] = { wins: 0, total: 0, pnl: 0, username: p.userName || 'Anon' };
-                                }
-                                stats[addr].total++;
+                        // Filter for Elon tweet markets
+                        const elonPos = positions.filter(p => {
+                            const title = (p.title || "").toLowerCase();
+                            return title.includes("elon") && (title.includes("tweet") || title.includes("post"));
+                        });
+
+                        if (elonPos.length >= 3) {
+                            let wins = 0, totalPnl = 0;
+                            elonPos.forEach(p => {
                                 const pnl = parseFloat(p.realizedPnl || '0');
-                                if (pnl > 0) stats[addr].wins++;
-                                stats[addr].pnl += pnl;
+                                if (pnl > 0) wins++;
+                                totalPnl += pnl;
                             });
+
+                            const accuracy = (wins / elonPos.length) * 100;
+                            if (accuracy >= 80) {
+                                candidates.push({
+                                    address: trader.address,
+                                    username: trader.username || 'Anon',
+                                    accuracy: accuracy,
+                                    trades: elonPos.length,
+                                    pnl: totalPnl
+                                });
+                            }
                         }
-                    } catch (e) { console.error("Error fetching market positions:", e); }
+                    } catch (e) { console.error(`Error analyzing ${trader.address}:`, e); }
                 }
 
-                upd("Filtering for high accuracy traders...", 90);
-
-                const candidates = Object.entries(stats)
-                    .map(([address, s]) => ({
-                        address,
-                        username: s.username,
-                        accuracy: (s.wins / s.total) * 100,
-                        trades: s.total,
-                        pnl: s.pnl
-                    }))
-                    .filter(c => c.accuracy >= 80 && c.trades >= 3)
-                    .sort((a, b) => b.pnl - a.pnl);
+                upd("Finalizing results...", 95);
 
                 if (candidates.length > 0) {
-                    const viewed = getViewed();
+                    candidates.sort((a, b) => b.pnl - a.pnl);
                     const fmtAmt = v => `$${v.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
 
                     tbody.innerHTML = candidates.map((r, i) => {
