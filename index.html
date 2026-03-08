@@ -1219,10 +1219,10 @@
                     upd(`Analyzing ${username} (${i + 1}/${uniqueAddresses.length})`, 20 + Math.floor((i / uniqueAddresses.length) * 75));
 
                     try {
-                        // Check Global Net PnL first
-                        const profResp = await fetch(`https://data-api.polymarket.com/profile?address=${addr}`);
-                        const prof = await profResp.json();
-                        const globalPnl = parseFloat(prof.pnL || '0');
+                        // Correct Global Net PnL endpoint (v1/leaderboard returns an array)
+                        const profResp = await fetch(`https://data-api.polymarket.com/v1/leaderboard?timePeriod=all&user=${addr}`);
+                        const profArr = await profResp.json();
+                        const globalPnl = (profArr && profArr.length > 0) ? parseFloat(profArr[0].pnl || '0') : 0;
 
                         // Ignore if global PnL is negative
                         if (globalPnl < 0) continue;
