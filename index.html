@@ -335,6 +335,30 @@
             text-decoration: underline;
         }
 
+        .btn-add-trader {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 20px;
+            height: 20px;
+            background: rgba(52, 211, 153, 0.1);
+            color: #34d399;
+            border: 1px solid rgba(52, 211, 153, 0.2);
+            border-radius: 4px;
+            font-size: 0.7rem;
+            cursor: pointer;
+            margin-left: 6px;
+            text-decoration: none;
+            transition: all 0.2s;
+            vertical-align: middle;
+        }
+
+        .btn-add-trader:hover {
+            background: rgba(52, 211, 153, 0.2);
+            border-color: rgba(52, 211, 153, 0.4);
+            transform: scale(1.1);
+        }
+
         .addr {
             font-size: 0.65rem;
             color: var(--text-muted);
@@ -907,6 +931,7 @@
                     <td class="bold" style="color:var(--text-muted)">${i + 1}</td>
                     <td>
                         <a href="https://polymarket.com/profile/${r.address}" target="_blank" class="trader-link plink" data-addr="${r.address}">${r.username}</a>${isNew ? '<span class="badge-new">NEW</span>' : ''}
+                        <a href="https://itzonecv.online/polydashboard/poly.html?address=${r.address}&username=${encodeURIComponent(r.username)}" target="_blank" class="btn-add-trader" title="Add to Dashboard">➕</a>
                         <br><span class="addr">${r.address.slice(0, 6)}...${r.address.slice(-4)}</span>
                         <span class="src-tag">${r.source}</span>
                     </td>
@@ -946,6 +971,7 @@
                     <td class="bold" style="color:var(--text-muted)">${i + 1}</td>
                     <td>
                         <a href="https://polymarket.com/profile/${r.address}" target="_blank" class="trader-link plink" data-addr="${r.address}">${r.username}</a>${isNew ? '<span class="badge-new">NEW</span>' : ''}
+                        <a href="https://itzonecv.online/polydashboard/poly.html?address=${r.address}&username=${encodeURIComponent(r.username)}" target="_blank" class="btn-add-trader" title="Add to Dashboard">➕</a>
                         <br><span class="addr">${r.address.slice(0, 6)}...${r.address.slice(-4)}</span>
                         <span class="src-tag">${r.source}</span>
                     </td>
@@ -1261,6 +1287,7 @@
                             <td class="bold" style="color:var(--text-muted)">${i + 1}</td>
                             <td>
                                 <a href="https://polymarket.com/profile/${r.address}" target="_blank" class="trader-link plink" data-addr="${r.address}">${r.username}</a>${isNew ? '<span class="badge-new">NEW</span>' : ''}
+                                <a href="https://itzonecv.online/polydashboard/poly.html?address=${r.address}&username=${encodeURIComponent(r.username)}" target="_blank" class="btn-add-trader" title="Add to Dashboard">➕</a>
                                 <br><span class="addr">${r.address.slice(0, 6)}...${r.address.slice(-4)}</span>
                                 <span class="src-tag">${r.source}</span>
                             </td>
