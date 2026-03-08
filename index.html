@@ -1218,6 +1218,14 @@
                     upd(`Analyzing ${username} (${i + 1}/${uniqueAddresses.length})`, 20 + Math.floor((i / uniqueAddresses.length) * 75));
 
                     try {
+                        // Check Global Net PnL first
+                        const profResp = await fetch(`https://data-api.polymarket.com/profile?address=${addr}`);
+                        const prof = await profResp.json();
+                        const globalPnl = parseFloat(prof.pnL || '0');
+
+                        // Ignore if global PnL is negative
+                        if (globalPnl < 0) continue;
+
                         const positions = await fetchClosedPositions(addr);
                         const elonPos = positions.filter(p => {
                             const title = (p.title || "").toLowerCase();
