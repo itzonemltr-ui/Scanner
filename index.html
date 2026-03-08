@@ -737,7 +737,8 @@
             <th>Trader</th>
             <th class="tip" data-tip="Win rate in Elon markets">Elon Accuracy</th>
             <th class="tip" data-tip="Total trades in Elon markets">Elon Trades</th>
-            <th class="tip" data-tip="Estimated total net PnL">Total PnL</th>
+            <th class="tip" data-tip="Net profit from recent Elon markets ONLY">Elon PnL</th>
+            <th class="tip" data-tip="Total net profit across all Polymarket trades">Global PnL</th>
             <th>Status</th>
         </tr>`;
 
@@ -1241,7 +1242,7 @@
 
                             const accuracy = (wins / elonPos.length) * 100;
                             if (accuracy >= 70 && totalPnl >= 500) {
-                                candidates.push({ address: addr, username, accuracy, trades: elonPos.length, pnl: totalPnl });
+                                candidates.push({ address: addr, username, accuracy, trades: elonPos.length, pnl: totalPnl, globalPnl });
                             }
                         }
                     } catch (e) { console.error(`Error analyzing ${addr}:`, e); }
@@ -1265,6 +1266,7 @@
                             <td class="bold green">${r.accuracy.toFixed(1)}%</td>
                             <td>${r.trades}</td>
                             <td class="bold ${r.pnl >= 0 ? 'green' : 'red'}">${fmtAmt(r.pnl)}</td>
+                            <td class="${r.globalPnl >= 0 ? 'green' : 'red'}">${fmtAmt(r.globalPnl)}</td>
                             <td><span class="badge-new" style="background:#1DA1F2; animation:none; box-shadow:none">ELON PRO</span></td>
                         </tr>`;
                     }).join('');
