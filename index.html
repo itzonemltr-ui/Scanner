@@ -1175,10 +1175,11 @@
             tbody.innerHTML = '';
 
             const upd = (t, p) => { statusText.textContent = t; progressBar.style.width = `${p}%`; };
+            const proxy = url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
 
             try {
                 upd("Finding Elon Musk Tweet markets...", 5);
-                const gammaSearch = await fetch(`https://gamma-api.polymarket.com/events?q=Elon%20Musk%20Tweet&active=true&limit=20`);
+                const gammaSearch = await fetch(proxy(`https://gamma-api.polymarket.com/events?q=Elon%20Musk%20Tweet&active=true&limit=20`));
                 const events = await gammaSearch.json();
 
                 const conditionIds = [];
@@ -1203,7 +1204,7 @@
                     upd(`Fetching participants for market ${i + 1}/${conditionIds.length}...`, 15 + Math.floor((i / conditionIds.length) * 60));
 
                     try {
-                        const posResp = await fetch(`https://data-api.polymarket.com/v1/market-positions?market=${cid}&status=CLOSED`);
+                        const posResp = await fetch(proxy(`https://data-api.polymarket.com/v1/market-positions?market=${cid}&status=CLOSED`));
                         const positions = await posResp.json();
 
                         if (Array.isArray(positions)) {
