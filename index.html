@@ -1162,7 +1162,7 @@
         });
 
 
-        // ── Elon Scan Main ──
+        // ── Elon Scan Main (Market-Centric) ──
         startElonBtn.addEventListener('click', async () => {
             document.getElementById('thead').innerHTML = ELON_HEADERS;
             startBtn.disabled = true;
@@ -1176,50 +1176,70 @@
 
             const upd = (t, p) => { statusText.textContent = t; progressBar.style.width = `${p}%`; };
 
+            // Seed Elon Markets (Condition IDs)
+            const elonMarkets = [
+                '0x28f186e8610112551be5f7b50221efd179df87e64b59b0be9de1ac8170fae909', // March 6-13 (80-99)
+                '0x7f694f9a5a73fd1815b1a849e2635ce5633b4d96e3a6c408d7707fce9a06fec8', // March 6-13 (100-119)
+                '0x08daa4ee2bf8c35563bfd0413aff48c03f89a880577b6e56560b498c4d26675e', // March 6-13 (120-139)
+                '0x0bba787435ba86f1c906c6f84705188b09e216388361849740f3501d5dc00c5f', // March 6-13 (140-159)
+                '0xcfc1df8ffaa3b7755b5bc059a06bf6527b3f8a6ff0efb45c2b70af999f07a99b'  // Resolved August
+            ];
+
             try {
-                upd("Fetching top traders for analysis...", 5);
-                const traders = await fetchAllTraders(upd);
-                upd(`Analyzing ${traders.length} elite traders for Elon accuracy...`, 10);
+                upd("Identifying active Elon market participants...", 5);
+                const participantMap = new Map(); // address -> username
+
+                for (let i = 0; i < elonMarkets.length; i++) {
+                    upd(`Fetching participants for Elon market ${i + 1}/${elonMarkets.length}...`, 5 + Math.floor((i / elonMarkets.length) * 15));
+                    try {
+                        const resp = await fetch(`https://data-api.polymarket.com/v1/market-positions?market=${elonMarkets[i]}&limit=50`);
+                        const data = await resp.json();
+                        if (Array.isArray(data)) {
+                            data.forEach(token => {
+                                if (token.positions) {
+                                    token.positions.forEach(p => {
+                                        if (p.proxyWallet) participantMap.set(p.proxyWallet.toLowerCase(), p.name || 'Anon');
+                                    });
+                                }
+                            });
+                        }
+                    } catch (e) { console.error(`Market ${elonMarkets[i]} fetch failed`, e); }
+                }
+
+                const uniqueAddresses = Array.from(participantMap.keys());
+                upd(`Analyzing ${uniqueAddresses.length} Elon market specialists...`, 20);
 
                 const candidates = [];
                 const viewed = getViewed();
 
-                for (let i = 0; i < traders.length; i++) {
-                    const trader = traders[i];
-                    upd(`Analyzing ${trader.username || 'Anon'} (${i + 1}/${traders.length})`, 10 + Math.floor((i / traders.length) * 85));
+                for (let i = 0; i < uniqueAddresses.length; i++) {
+                    const addr = uniqueAddresses[i];
+                    const username = participantMap.get(addr);
+                    upd(`Analyzing ${username} (${i + 1}/${uniqueAddresses.length})`, 20 + Math.floor((i / uniqueAddresses.length) * 75));
 
                     try {
-                        const positions = await fetchClosedPositions(trader.address);
-
-                        // Filter for Elon tweet markets
+                        const positions = await fetchClosedPositions(addr);
                         const elonPos = positions.filter(p => {
                             const title = (p.title || "").toLowerCase();
-                            return title.includes("elon") && (title.includes("tweet") || title.includes("post"));
+                            return title.includes("elon") && (title.includes("tweet") || title.includes("post") || title.includes("x.com"));
                         });
 
                         if (elonPos.length >= 3) {
                             let wins = 0, totalPnl = 0;
                             elonPos.forEach(p => {
-                                const pnl = parseFloat(p.realizedPnl || '0');
-                                if (pnl > 0) wins++;
-                                totalPnl += pnl;
+                                if (parseFloat(p.realizedPnl || '0') > 0) wins++;
+                                totalPnl += parseFloat(p.realizedPnl || '0');
                             });
 
                             const accuracy = (wins / elonPos.length) * 100;
                             if (accuracy >= 70) {
-                                candidates.push({
-                                    address: trader.address,
-                                    username: trader.username || 'Anon',
-                                    accuracy: accuracy,
-                                    trades: elonPos.length,
-                                    pnl: totalPnl
-                                });
+                                candidates.push({ address: addr, username, accuracy, trades: elonPos.length, pnl: totalPnl });
                             }
                         }
-                    } catch (e) { console.error(`Error analyzing ${trader.address}:`, e); }
+                    } catch (e) { console.error(`Error analyzing ${addr}:`, e); }
                 }
 
-                upd("Finalizing results...", 95);
+                upd("Finalizing specialist results...", 95);
 
                 if (candidates.length > 0) {
                     candidates.sort((a, b) => b.pnl - a.pnl);
@@ -1249,10 +1269,10 @@
                         });
                     });
 
-                    upd(`Done! Found ${candidates.length} traders with >= 70% Elon accuracy.`, 100);
+                    upd(`Done! Found ${candidates.length} Elon specialists with >= 70% accuracy.`, 100);
                     tableWrap.style.display = 'block';
                 } else {
-                    upd("Done. No traders found meeting the 70% accuracy criteria.", 100);
+                    upd("Done. No specialists found meeting the criteria in the targeted markets.", 100);
                 }
 
             } catch (err) {
