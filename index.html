@@ -513,9 +513,9 @@
             <button id="startWhalesBtn"
                 style="background:var(--accent);box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);">🐋 Run New Whales
                 Scan</button>
-            <button id="startInsiderBtn"
-                style="background:var(--accent-red);box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);">🕵️ Run Insider
-                Scan</button>
+            <button id="startElonBtn" style="background: #1DA1F2; box-shadow: 0 4px 15px rgba(29, 161, 242, 0.3);">🐦
+                Run Elon Scan</button>
+
         </div>
 
         <div class="status-box" id="statusBox">
@@ -590,7 +590,7 @@
         // ── DOM refs ──
         const startBtn = document.getElementById('startBtn');
         const startWhalesBtn = document.getElementById('startWhalesBtn');
-        const startInsiderBtn = document.getElementById('startInsiderBtn');
+        const startElonBtn = document.getElementById('startElonBtn');
         const statusBox = document.getElementById('statusBox');
         const statusText = document.getElementById('statusText');
         const progressBar = document.getElementById('progressBar');
@@ -730,14 +730,14 @@
             <th>Status</th>
         </tr>`;
 
-        const INSIDER_HEADERS = `<tr>
+
+
+        const ELON_HEADERS = `<tr>
             <th>#</th>
             <th>Trader</th>
-            <th class="tip" data-tip="Win rate percentage">Win%</th>
-            <th class="tip" data-tip="Total trade count">Trades</th>
-            <th class="tip" data-tip="Largest single USDC bet">Max Single Bet</th>
-            <th class="tip" data-tip="Net PnL of wallet">Net PnL</th>
-            <th class="tip" data-tip="Unique markets traded">Mkts</th>
+            <th class="tip" data-tip="Win rate in Elon markets">Elon Accuracy</th>
+            <th class="tip" data-tip="Total trades in Elon markets">Elon Trades</th>
+            <th class="tip" data-tip="Estimated total net PnL">Total PnL</th>
             <th>Status</th>
         </tr>`;
 
@@ -746,7 +746,6 @@
             document.getElementById('thead').innerHTML = ELITE_HEADERS;
             startBtn.disabled = true;
             startWhalesBtn.disabled = true;
-            startInsiderBtn.disabled = true;
             statusBox.style.display = 'block';
             tableWrap.style.display = 'none';
             summaryStrip.style.display = 'none';
@@ -1162,12 +1161,13 @@
             }
         });
 
-        // ── Insider Scan Main ──
-        startInsiderBtn.addEventListener('click', async () => {
-            document.getElementById('thead').innerHTML = INSIDER_HEADERS;
+
+        // ── Elon Scan Main ──
+        startElonBtn.addEventListener('click', async () => {
+            document.getElementById('thead').innerHTML = ELON_HEADERS;
             startBtn.disabled = true;
             startWhalesBtn.disabled = true;
-            startInsiderBtn.disabled = true;
+            startElonBtn.disabled = true;
             statusBox.style.display = 'block';
             tableWrap.style.display = 'none';
             summaryStrip.style.display = 'none';
@@ -1177,114 +1177,68 @@
             const upd = (t, p) => { statusText.textContent = t; progressBar.style.width = `${p}%`; };
 
             try {
-                const traders = await fetchAllTraders(upd);
-                upd(`Found ${traders.length} unique traders. Scanning for Insiders...`, 10);
+                upd("Finding Elon Musk Tweet markets...", 5);
+                const gammaSearch = await fetch(`https://gamma-api.polymarket.com/events?q=Elon%20Musk%20Tweet&active=true&limit=20`);
+                const events = await gammaSearch.json();
 
-                const now = Date.now();
-                const T30 = now - 30 * 86400000;
-
-                const ex = {
-                    noPos: 0, oldWallet: 0, lowWinRate: 0, smallScale: 0, errors: 0
-                };
-
-                const candidates = [];
-
-                for (let i = 0; i < traders.length; i++) {
-                    const trader = traders[i];
-                    upd(`[Scanning] ${trader.username || 'Anon'} (${i + 1}/${traders.length})`, 10 + Math.floor((i / traders.length) * 85));
-
-                    try {
-                        const [positions, activities] = await Promise.all([
-                            fetchClosedPositions(trader.address),
-                            fetchActivity(trader.address)
-                        ]);
-
-                        if (positions.length === 0 && activities.length === 0) { ex.noPos++; continue; }
-
-                        let oldestTs = Date.now();
-
-                        // Check activities for oldest timestamp
-                        if (activities.length > 0) {
-                            const oldestAct = activities[activities.length - 1];
-                            oldestTs = Math.min(oldestTs, oldestAct.timestamp * 1000);
-                        }
-
-                        // Check positions for oldest timestamp
-                        if (positions.length > 0) {
-                            // Positions might not be sorted by time, so check all
-                            for (const pos of positions) {
-                                if (pos.timestamp) {
-                                    oldestTs = Math.min(oldestTs, pos.timestamp * 1000);
-                                }
-                            }
-                        }
-
-                        if (oldestTs < T30) {
-                            ex.oldWallet++;
-                            continue;
-                        }
-
-                        let wins = 0;
-                        let maxSingleBet = 0;
-                        let netPnl = 0;
-
-                        // Calculate Win Rate and Net PnL from closed positions
-                        for (const pos of positions) {
-                            const pnl = parseFloat(pos.realizedPnl || '0');
-                            netPnl += pnl;
-                            if (pnl > 0) wins++;
-                        }
-                        const winRate = positions.length > 0 ? (wins / positions.length) * 100 : 0;
-
-                        // Find Max Single Bet from activities
-                        for (const act of activities) {
-                            if (act.type === 'TRADE') {
-                                const size = parseFloat(act.usdcSize || '0');
-                                if (size > maxSingleBet) maxSingleBet = size;
-                            }
-                        }
-
-                        // Also check positions for max initial bet
-                        for (const pos of positions) {
-                            const posTotBought = parseFloat(pos.totalBought || '0');
-                            if (posTotBought > maxSingleBet) maxSingleBet = posTotBought;
-                        }
-
-                        const uniqueMarkets = new Set(positions.map(p => p.conditionId)).size;
-                        const totalTrades = activities.filter(a => a.type === 'TRADE').length;
-
-                        // ── Insider Criteria ──
-                        if (winRate < 80) { ex.lowWinRate++; continue; }
-                        if (maxSingleBet < 5000 && netPnl < 10000) { ex.smallScale++; continue; }
-
-                        candidates.push({
-                            username: trader.username || 'Anonymous',
-                            address: trader.address,
-                            source: trader.source,
-                            winRate,
-                            totalTrades,
-                            maxSingleBet,
-                            netPnl,
-                            uniqueMarkets
+                const conditionIds = [];
+                events.forEach(ev => {
+                    if (ev.markets) {
+                        ev.markets.forEach(m => {
+                            if (m.conditionId) conditionIds.push(m.conditionId);
                         });
-                    } catch (e) {
-                        console.error(`Error ${trader.address}:`, e);
-                        ex.errors++;
                     }
+                });
+
+                if (conditionIds.length === 0) {
+                    throw new Error("No Elon Tweet markets found.");
                 }
 
-                upd('Sorting Insiders...', 97);
+                upd(`Found ${conditionIds.length} market conditions. Fetching participants...`, 15);
+
+                const stats = {}; // { address: { wins: 0, total: 0, pnl: 0, username: '' } }
+
+                for (let i = 0; i < conditionIds.length; i++) {
+                    const cid = conditionIds[i];
+                    upd(`Fetching participants for market ${i + 1}/${conditionIds.length}...`, 15 + Math.floor((i / conditionIds.length) * 60));
+
+                    try {
+                        const posResp = await fetch(`https://data-api.polymarket.com/v1/market-positions?market=${cid}&status=CLOSED`);
+                        const positions = await posResp.json();
+
+                        if (Array.isArray(positions)) {
+                            positions.forEach(p => {
+                                const addr = p.user;
+                                if (!stats[addr]) {
+                                    stats[addr] = { wins: 0, total: 0, pnl: 0, username: p.userName || 'Anon' };
+                                }
+                                stats[addr].total++;
+                                const pnl = parseFloat(p.realizedPnl || '0');
+                                if (pnl > 0) stats[addr].wins++;
+                                stats[addr].pnl += pnl;
+                            });
+                        }
+                    } catch (e) { console.error("Error fetching market positions:", e); }
+                }
+
+                upd("Filtering for high accuracy traders...", 90);
+
+                const candidates = Object.entries(stats)
+                    .map(([address, s]) => ({
+                        address,
+                        username: s.username,
+                        accuracy: (s.wins / s.total) * 100,
+                        trades: s.total,
+                        pnl: s.pnl
+                    }))
+                    .filter(c => c.accuracy >= 80 && c.trades >= 3)
+                    .sort((a, b) => b.pnl - a.pnl);
 
                 if (candidates.length > 0) {
-                    // Sort primarily by net PnL then win rate
-                    candidates.sort((a, b) => b.netPnl - a.netPnl || b.winRate - a.winRate);
-                    const top50 = candidates.slice(0, 50);
-
-                    // Render Results
                     const viewed = getViewed();
                     const fmtAmt = v => `$${v.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
 
-                    tbody.innerHTML = top50.map((r, i) => {
+                    tbody.innerHTML = candidates.map((r, i) => {
                         const isNew = !viewed.includes(r.address);
                         return `<tr class="fade-in">
                             <td class="bold" style="color:var(--text-muted)">${i + 1}</td>
@@ -1292,14 +1246,11 @@
                                 <a href="https://polymarket.com/profile/${r.address}" target="_blank" class="trader-link plink" data-addr="${r.address}">${r.username}</a>${isNew ? '<span class="badge-new">NEW</span>' : ''}
                                 <a href="${DASHBOARD_URL}?address=${r.address}&username=${encodeURIComponent(r.username)}" target="_blank" class="btn-add-trader" title="Add to Dashboard">➕</a>
                                 <br><span class="addr">${r.address.slice(0, 6)}...${r.address.slice(-4)}</span>
-                                <span class="src-tag">${r.source}</span>
                             </td>
-                            <td class="bold green">${r.winRate.toFixed(1)}%</td>
-                            <td>${r.totalTrades}</td>
-                            <td class="mono">${fmtAmt(r.maxSingleBet)}</td>
-                            <td class="bold ${r.netPnl >= 0 ? 'green' : 'red'}">${fmtAmt(r.netPnl)}</td>
-                            <td class="bold amber" style="text-align:center">${r.uniqueMarkets}</td>
-                            <td><span class="red bold" style="font-size:0.7rem">🕵️ INSIDER</span></td>
+                            <td class="bold green">${r.accuracy.toFixed(1)}%</td>
+                            <td>${r.trades}</td>
+                            <td class="bold ${r.pnl >= 0 ? 'green' : 'red'}">${fmtAmt(r.pnl)}</td>
+                            <td><span class="badge-new" style="background:#1DA1F2; animation:none; box-shadow:none">ELON PRO</span></td>
                         </tr>`;
                     }).join('');
 
@@ -1311,58 +1262,10 @@
                         });
                     });
 
-                    // Render Exclusions
-                    const total = traders.length;
-                    const qualified = top50.length;
-                    const filterTotal = total - qualified - ex.noPos - ex.oldWallet - ex.errors;
-
-                    const cards = [
-                        { i: '🚫', l: 'No Activity', n: ex.noPos, c: 'r' },
-                        { i: '📅', l: 'Old Wallet (>1mo)', n: ex.oldWallet, c: 'o' },
-                        { i: '📉', l: 'Win Rate < 80%', n: ex.lowWinRate, c: 'a' },
-                        { i: '🐟', l: 'Small Bets/PnL', n: ex.smallScale, c: 'c' },
-                        { i: '⚠️', l: 'API Errors', n: ex.errors, c: 'r' },
-                    ];
-
-                    exclGrid.innerHTML = cards.filter(c => c.n > 0).map(c => `
-                        <div class="excl-card">
-                            <div class="excl-icon ${c.c}">${c.i}</div>
-                            <div>
-                                <div class="excl-count">${c.n}</div>
-                                <div class="excl-label">${c.l}</div>
-                            </div>
-                        </div>
-                    `).join('');
-                    exclSection.style.display = 'block';
-
-                    summaryStrip.style.display = 'block';
-                    document.getElementById('ssScanned').textContent = total;
-                    document.getElementById('ssBots').textContent = 0;
-                    document.getElementById('ssFiltered').textContent = total - qualified;
-                    document.getElementById('ssElite').textContent = qualified;
-                    document.getElementById('ssRate').textContent = `${total > 0 ? ((qualified / total) * 100).toFixed(0) : 0}%`;
-
-                    upd(`Done! ${top50.length} insiders found from ${traders.length} scanned.`, 100);
+                    upd(`Done! Found ${candidates.length} high-accuracy Elon traders.`, 100);
                     tableWrap.style.display = 'block';
                 } else {
-                    const cards = [
-                        { i: '🚫', l: 'No Activity', n: ex.noPos, c: 'r' },
-                        { i: '📅', l: 'Old Wallet (>1mo)', n: ex.oldWallet, c: 'o' },
-                        { i: '📉', l: 'Win Rate < 80%', n: ex.lowWinRate, c: 'a' },
-                        { i: '🐟', l: 'Small Bets/PnL', n: ex.smallScale, c: 'c' },
-                        { i: '⚠️', l: 'API Errors', n: ex.errors, c: 'r' },
-                    ];
-                    exclGrid.innerHTML = cards.filter(c => c.n > 0).map(c => `
-                        <div class="excl-card">
-                            <div class="excl-icon ${c.c}">${c.i}</div>
-                            <div>
-                                <div class="excl-count">${c.n}</div>
-                                <div class="excl-label">${c.l}</div>
-                            </div>
-                        </div>
-                    `).join('');
-                    exclSection.style.display = 'block';
-                    upd(`Done. No insiders found from ${traders.length} scanned.`, 100);
+                    upd("Done. No traders found meeting the 80% accuracy criteria.", 100);
                 }
 
             } catch (err) {
@@ -1370,7 +1273,7 @@
             } finally {
                 startBtn.disabled = false;
                 startWhalesBtn.disabled = false;
-                startInsiderBtn.disabled = false;
+                startElonBtn.disabled = false;
             }
         });
     </script>
