@@ -587,33 +587,6 @@
     <script>
         const API = 'https://data-api.polymarket.com';
 
-        // ── Header Constants ──
-        const ELITE_HEADERS = `<tr>
-            <th>#</th>
-            <th>Trader</th>
-            <th class="tip" data-tip="Composite quality grade">Grade</th>
-            <th class="tip" data-tip="Total trade count in 30d">Trades</th>
-            <th class="tip" data-tip="Total USDC volume">Volume</th>
-            <th class="tip" data-tip="Gross Profit / Gross Loss">PF</th>
-            <th class="tip" data-tip="PF without best trade">Robust PF</th>
-            <th class="tip" data-tip="Win rate percentage">Win%</th>
-            <th class="tip" data-tip="Net profit in USDC">Net PnL</th>
-            <th class="tip" data-tip="Average profit per trade">Avg PnL</th>
-            <th class="tip" data-tip="Maximum peak-to-trough decline">Max DD</th>
-            <th class="tip" data-tip="Std deviation of per-trade returns">Volatility</th>
-            <th class="tip" data-tip="Net Profit / Volatility">Risk Adj</th>
-            <th class="tip" data-tip="Weekly P&L bars (4 weeks)">Consistency</th>
-            <th class="tip" data-tip="Unique markets traded">Mkts</th>
-            <th>Status</th>
-        </tr>`;
-
-        const WHALE_HEADERS = `<tr><th>#</th><th>Trader</th><th>Age</th><th>Trades</th><th>Volume</th><th>Max Bet</th><th>PnL</th><th style="text-align:center">Action</th></tr>`;
-        const INSIDER_HEADERS = `<tr><th>#</th><th>Trader</th><th>Win%</th><th>Trds</th><th>Max Bet</th><th>PnL</th><th style="text-align:center">Markets</th><th style="text-align:center">Action</th></tr>`;
-
-        // Link to your dashboard. Use relative path for local testing or absolute URL for remote.
-        // const DASHBOARD_URL = "https://itzonecv.online/polydashboard/poly.html";
-        const DASHBOARD_URL = "../polydashboard/poly.html";
-
         // ── DOM refs ──
         const startBtn = document.getElementById('startBtn');
         const startWhalesBtn = document.getElementById('startWhalesBtn');
